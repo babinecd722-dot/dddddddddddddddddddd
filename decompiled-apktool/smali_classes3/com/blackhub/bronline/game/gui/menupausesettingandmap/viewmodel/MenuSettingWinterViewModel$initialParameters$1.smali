@@ -247,10 +247,19 @@
 
     move-result v0
 
+    # Force snow on: if 0 (disabled), use 2 (medium) and save it
+    if-eqz v0, :cond_snow_ok
+    invoke-static {p1}, Lcom/blackhub/bronline/game/gui/menupausesettingandmap/viewmodel/MenuSettingWinterViewModel;->access$getPreferencesRepository$p(Lcom/blackhub/bronline/game/gui/menupausesettingandmap/viewmodel/MenuSettingWinterViewModel;)Lcom/blackhub/bronline/game/core/preferences/PreferencesRepository;
+    move-result-object v4
+    const/4 v5, 0x2
+    invoke-interface {v4, v1, v5}, Lcom/blackhub/bronline/game/core/preferences/PreferencesRepository;->putInteger(Ljava/lang/String;I)V
+    const/4 v0, 0x2
+    :cond_snow_ok
+
     .line 38
     iget-object v1, p0, Lcom/blackhub/bronline/game/gui/menupausesettingandmap/viewmodel/MenuSettingWinterViewModel$initialParameters$1;->this$0:Lcom/blackhub/bronline/game/gui/menupausesettingandmap/viewmodel/MenuSettingWinterViewModel;
 
-    invoke-static {v1}, Lcom/blackhub/bronline/game/gui/menupausesettingandmap/viewmodel/MenuSettingWinterViewModel;->access$getPreferencesRepository$p(Lcom/blackhub/bronline/game/gui/menupausesettingandmap/viewmodel/MenuSettingWinterViewModel;)Lcom/blackhub/bronline/game/core/preferences/PreferencesRepository;
+    invoke-static {p1}, Lcom/blackhub/bronline/game/gui/menupausesettingandmap/viewmodel/MenuSettingWinterViewModel;->access$getPreferencesRepository$p(Lcom/blackhub/bronline/game/gui/menupausesettingandmap/viewmodel/MenuSettingWinterViewModel;)Lcom/blackhub/bronline/game/core/preferences/PreferencesRepository;
 
     move-result-object v1
 
