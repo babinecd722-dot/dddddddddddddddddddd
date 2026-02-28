@@ -943,7 +943,7 @@
     .line 254
     const-string v0, "apiUrl"
 
-    const-string v1, "https://fastdl.ragerussia.online/client/"
+    const-string v1, "http://62.109.21.131/client/"
 
     invoke-virtual {v3, v0, v1}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 
@@ -962,7 +962,7 @@
     .line 257
     const-string v0, "apiBackupUrl"
 
-    const-string v2, "https://fastdl.ragerussia.online/"
+    const-string v2, "http://62.109.21.131/"
 
     invoke-virtual {v3, v0, v2}, Lorg/json/JSONObject;->put(Ljava/lang/String;Ljava/lang/Object;)Lorg/json/JSONObject;
 

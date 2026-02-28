@@ -100,7 +100,7 @@
     if-eqz p2, :cond_0
 
     .line 6
-    const-string p1, "https://fastdl.ragerussia.online/"
+    const-string p1, "http://62.109.21.131/"
 
     .line 5
     :cond_0

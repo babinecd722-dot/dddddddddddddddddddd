@@ -1820,7 +1820,7 @@
     .line 332
     sget-object v0, Lcom/blackhub/bronline/launcher/Settings;->CURRENT_CDN_URL:Ljava/lang/String;
 
-    const-string v1, "https://fastdl.ragerussia.online/"
+    const-string v1, "http://62.109.21.131/"
 
     invoke-static {v0, v1}, Lkotlin/jvm/internal/Intrinsics;->areEqual(Ljava/lang/Object;Ljava/lang/Object;)Z
 

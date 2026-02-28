@@ -22,13 +22,13 @@
 
 .field public static final API_BACKUP_PASSWORD:Ljava/lang/String; = ""
 
-.field public static final API_BACKUP_URL:Ljava/lang/String; = "https://fastdl.ragerussia.online/client/"
+.field public static final API_BACKUP_URL:Ljava/lang/String; = "http://62.109.21.131/client/"
 
 .field public static final API_BACKUP_USERNAME:Ljava/lang/String; = ""
 
 .field public static final API_PASSWORD:Ljava/lang/String; = ""
 
-.field public static final API_URL:Ljava/lang/String; = "https://fastdl.ragerussia.online/client/"
+.field public static final API_URL:Ljava/lang/String; = "http://62.109.21.131/client/"
 
 .field public static final API_URL_USER_AGENT:Ljava/lang/String; = "MOl9ISIvsVFgqqVgDIBpVmf"
 
@@ -38,7 +38,7 @@
 
 .field public static final BUILD_TYPE:Ljava/lang/String; = "release"
 
-.field public static final CDN_BACKUP_URL:Ljava/lang/String; = "https://fastdl.ragerussia.online/"
+.field public static final CDN_BACKUP_URL:Ljava/lang/String; = "http://62.109.21.131/"
 
 .field public static final CDN_PASSWORD:Ljava/lang/String; = "DzEI3O4VDpdc6KpcSfd3"
 

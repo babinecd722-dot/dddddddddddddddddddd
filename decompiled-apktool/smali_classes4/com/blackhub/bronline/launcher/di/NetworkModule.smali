@@ -463,7 +463,7 @@
     move-result-object v0
 
     .line 127
-    const-string v1, "https://fastdl.ragerussia.online/"
+    const-string v1, "http://62.109.21.131/"
 
     invoke-virtual {v0, v1}, Lretrofit2/Retrofit$Builder;->baseUrl(Ljava/lang/String;)Lretrofit2/Retrofit$Builder;
 
@@ -574,7 +574,7 @@
     move-result-object v0
 
     .line 169
-    const-string v1, "https://fastdl.ragerussia.online/"
+    const-string v1, "http://62.109.21.131/"
 
     invoke-virtual {v0, v1}, Lretrofit2/Retrofit$Builder;->baseUrl(Ljava/lang/String;)Lretrofit2/Retrofit$Builder;
 
@@ -659,7 +659,7 @@
     .line 505
     new-instance v1, Lcom/blackhub/bronline/launcher/di/NetworkModule$provideBackupCdnApiService$$inlined$-addInterceptor$1;
 
-    const-string v2, "https://fastdl.ragerussia.online/"
+    const-string v2, "http://62.109.21.131/"
 
     invoke-direct {v1, v2}, Lcom/blackhub/bronline/launcher/di/NetworkModule$provideBackupCdnApiService$$inlined$-addInterceptor$1;-><init>(Ljava/lang/String;)V
 
