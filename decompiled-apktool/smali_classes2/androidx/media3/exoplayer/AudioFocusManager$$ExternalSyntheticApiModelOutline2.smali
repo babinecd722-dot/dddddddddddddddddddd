@@ -1,0 +1,16 @@
+.class public final synthetic Landroidx/media3/exoplayer/AudioFocusManager$$ExternalSyntheticApiModelOutline2;
+.super Ljava/lang/Object;
+.source "R8$$SyntheticClass"
+
+
+# direct methods
+.method public static bridge synthetic m(Landroid/media/AudioFocusRequest$Builder;Landroid/media/AudioManager$OnAudioFocusChangeListener;)Landroid/media/AudioFocusRequest$Builder;
+    .locals 0
+
+    .line 0
+    invoke-virtual {p0, p1}, Landroid/media/AudioFocusRequest$Builder;->setOnAudioFocusChangeListener(Landroid/media/AudioManager$OnAudioFocusChangeListener;)Landroid/media/AudioFocusRequest$Builder;
+
+    move-result-object p0
+
+    return-object p0
+.end method

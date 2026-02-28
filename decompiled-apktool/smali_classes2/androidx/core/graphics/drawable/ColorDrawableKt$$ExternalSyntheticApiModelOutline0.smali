@@ -1,0 +1,16 @@
+.class public final synthetic Landroidx/core/graphics/drawable/ColorDrawableKt$$ExternalSyntheticApiModelOutline0;
+.super Ljava/lang/Object;
+.source "R8$$SyntheticClass"
+
+
+# direct methods
+.method public static bridge synthetic m(Landroid/graphics/Color;)I
+    .locals 0
+
+    .line 0
+    invoke-virtual {p0}, Landroid/graphics/Color;->toArgb()I
+
+    move-result p0
+
+    return p0
+.end method

@@ -1,0 +1,179 @@
+.class public final Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment_MembersInjector;
+.super Ljava/lang/Object;
+.source "RaiseChargeFragment_MembersInjector.java"
+
+# interfaces
+.implements Ldagger/MembersInjector;
+
+
+# annotations
+.annotation build Ldagger/internal/DaggerGenerated;
+.end annotation
+
+.annotation build Ldagger/internal/QualifierMetadata;
+.end annotation
+
+.annotation system Ldalvik/annotation/Signature;
+    value = {
+        "Ljava/lang/Object;",
+        "Ldagger/MembersInjector<",
+        "Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment;",
+        ">;"
+    }
+.end annotation
+
+
+# instance fields
+.field public final factoryProvider:Ljavax/inject/Provider;
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "Ljavax/inject/Provider<",
+            "Lcom/blackhub/bronline/launcher/viewmodel/MainViewModelFactory<",
+            "Lcom/blackhub/bronline/game/gui/electric/viewmodel/RaiseChargeViewModel;",
+            ">;>;"
+        }
+    .end annotation
+.end field
+
+
+# direct methods
+.method public constructor <init>(Ljavax/inject/Provider;)V
+    .locals 0
+    .annotation system Ldalvik/annotation/MethodParameters;
+        accessFlags = {
+            0x0
+        }
+        names = {
+            "factoryProvider"
+        }
+    .end annotation
+
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "(",
+            "Ljavax/inject/Provider<",
+            "Lcom/blackhub/bronline/launcher/viewmodel/MainViewModelFactory<",
+            "Lcom/blackhub/bronline/game/gui/electric/viewmodel/RaiseChargeViewModel;",
+            ">;>;)V"
+        }
+    .end annotation
+
+    .line 28
+    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    .line 29
+    iput-object p1, p0, Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment_MembersInjector;->factoryProvider:Ljavax/inject/Provider;
+
+    return-void
+.end method
+
+.method public static create(Ljavax/inject/Provider;)Ldagger/MembersInjector;
+    .locals 1
+    .annotation system Ldalvik/annotation/MethodParameters;
+        accessFlags = {
+            0x0
+        }
+        names = {
+            "factoryProvider"
+        }
+    .end annotation
+
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "(",
+            "Ljavax/inject/Provider<",
+            "Lcom/blackhub/bronline/launcher/viewmodel/MainViewModelFactory<",
+            "Lcom/blackhub/bronline/game/gui/electric/viewmodel/RaiseChargeViewModel;",
+            ">;>;)",
+            "Ldagger/MembersInjector<",
+            "Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment;",
+            ">;"
+        }
+    .end annotation
+
+    .line 34
+    new-instance v0, Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment_MembersInjector;
+
+    invoke-direct {v0, p0}, Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment_MembersInjector;-><init>(Ljavax/inject/Provider;)V
+
+    return-object v0
+.end method
+
+.method public static injectFactory(Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment;Lcom/blackhub/bronline/launcher/viewmodel/MainViewModelFactory;)V
+    .locals 0
+    .annotation build Ldagger/internal/InjectedFieldSignature;
+        value = "com.blackhub.bronline.game.gui.electric.ui.RaiseChargeFragment.factory"
+    .end annotation
+
+    .annotation system Ldalvik/annotation/MethodParameters;
+        accessFlags = {
+            0x0,
+            0x0
+        }
+        names = {
+            "instance",
+            "factory"
+        }
+    .end annotation
+
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "(",
+            "Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment;",
+            "Lcom/blackhub/bronline/launcher/viewmodel/MainViewModelFactory<",
+            "Lcom/blackhub/bronline/game/gui/electric/viewmodel/RaiseChargeViewModel;",
+            ">;)V"
+        }
+    .end annotation
+
+    .line 45
+    iput-object p1, p0, Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment;->factory:Lcom/blackhub/bronline/launcher/viewmodel/MainViewModelFactory;
+
+    return-void
+.end method
+
+
+# virtual methods
+.method public injectMembers(Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment;)V
+    .locals 1
+    .annotation system Ldalvik/annotation/MethodParameters;
+        accessFlags = {
+            0x0
+        }
+        names = {
+            "instance"
+        }
+    .end annotation
+
+    .line 39
+    iget-object v0, p0, Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment_MembersInjector;->factoryProvider:Ljavax/inject/Provider;
+
+    invoke-interface {v0}, Ljavax/inject/Provider;->get()Ljava/lang/Object;
+
+    move-result-object v0
+
+    check-cast v0, Lcom/blackhub/bronline/launcher/viewmodel/MainViewModelFactory;
+
+    invoke-static {p1, v0}, Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment_MembersInjector;->injectFactory(Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment;Lcom/blackhub/bronline/launcher/viewmodel/MainViewModelFactory;)V
+
+    return-void
+.end method
+
+.method public bridge synthetic injectMembers(Ljava/lang/Object;)V
+    .locals 0
+    .annotation system Ldalvik/annotation/MethodParameters;
+        accessFlags = {
+            0x1000
+        }
+        names = {
+            "instance"
+        }
+    .end annotation
+
+    .line 12
+    check-cast p1, Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment;
+
+    invoke-virtual {p0, p1}, Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment_MembersInjector;->injectMembers(Lcom/blackhub/bronline/game/gui/electric/ui/RaiseChargeFragment;)V
+
+    return-void
+.end method

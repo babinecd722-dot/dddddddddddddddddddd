@@ -1,0 +1,70 @@
+.class public Landroidx/core/view/autofill/AutofillIdCompat;
+.super Ljava/lang/Object;
+.source "AutofillIdCompat.java"
+
+
+# instance fields
+.field public final mWrappedObj:Ljava/lang/Object;
+
+
+# direct methods
+.method public constructor <init>(Landroid/view/autofill/AutofillId;)V
+    .locals 0
+    .param p1    # Landroid/view/autofill/AutofillId;
+        .annotation build Landroidx/annotation/NonNull;
+        .end annotation
+    .end param
+    .annotation build Landroidx/annotation/RequiresApi;
+        value = 0x1a
+    .end annotation
+
+    .line 32
+    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    .line 33
+    iput-object p1, p0, Landroidx/core/view/autofill/AutofillIdCompat;->mWrappedObj:Ljava/lang/Object;
+
+    return-void
+.end method
+
+.method public static toAutofillIdCompat(Landroid/view/autofill/AutofillId;)Landroidx/core/view/autofill/AutofillIdCompat;
+    .locals 1
+    .param p0    # Landroid/view/autofill/AutofillId;
+        .annotation build Landroidx/annotation/NonNull;
+        .end annotation
+    .end param
+    .annotation build Landroidx/annotation/NonNull;
+    .end annotation
+
+    .annotation build Landroidx/annotation/RequiresApi;
+        value = 0x1a
+    .end annotation
+
+    .line 48
+    new-instance v0, Landroidx/core/view/autofill/AutofillIdCompat;
+
+    invoke-direct {v0, p0}, Landroidx/core/view/autofill/AutofillIdCompat;-><init>(Landroid/view/autofill/AutofillId;)V
+
+    return-object v0
+.end method
+
+
+# virtual methods
+.method public toAutofillId()Landroid/view/autofill/AutofillId;
+    .locals 1
+    .annotation build Landroidx/annotation/NonNull;
+    .end annotation
+
+    .annotation build Landroidx/annotation/RequiresApi;
+        value = 0x1a
+    .end annotation
+
+    .line 63
+    iget-object v0, p0, Landroidx/core/view/autofill/AutofillIdCompat;->mWrappedObj:Ljava/lang/Object;
+
+    invoke-static {v0}, Landroidx/compose/ui/platform/coreshims/AutofillIdCompat$$ExternalSyntheticApiModelOutline0;->m(Ljava/lang/Object;)Landroid/view/autofill/AutofillId;
+
+    move-result-object v0
+
+    return-object v0
+.end method
