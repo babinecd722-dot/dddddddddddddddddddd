@@ -1,0 +1,202 @@
+.class public final Lio/appmetrica/analytics/impl/Je;
+.super Ljava/lang/Object;
+.source "SourceFile"
+
+# interfaces
+.implements Lio/appmetrica/analytics/coreapi/internal/data/ProtobufConverter;
+
+
+# instance fields
+.field public final a:Lio/appmetrica/analytics/impl/He;
+
+
+# direct methods
+.method public constructor <init>()V
+    .locals 1
+
+    .line 1
+    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    .line 6
+    new-instance v0, Lio/appmetrica/analytics/impl/He;
+
+    invoke-direct {v0}, Lio/appmetrica/analytics/impl/He;-><init>()V
+
+    iput-object v0, p0, Lio/appmetrica/analytics/impl/Je;->a:Lio/appmetrica/analytics/impl/He;
+
+    return-void
+.end method
+
+
+# virtual methods
+.method public final a(Lio/appmetrica/analytics/impl/Ie;)Lio/appmetrica/analytics/impl/De;
+    .locals 2
+    .param p1    # Lio/appmetrica/analytics/impl/Ie;
+        .annotation build Landroidx/annotation/NonNull;
+        .end annotation
+    .end param
+    .annotation build Landroidx/annotation/NonNull;
+    .end annotation
+
+    .line 1
+    new-instance v0, Lio/appmetrica/analytics/impl/De;
+
+    invoke-direct {v0}, Lio/appmetrica/analytics/impl/De;-><init>()V
+
+    .line 2
+    iget-object v1, p1, Lio/appmetrica/analytics/impl/Ie;->a:Ljava/lang/String;
+
+    invoke-static {v1}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
+
+    move-result v1
+
+    if-nez v1, :cond_0
+
+    .line 3
+    iget-object v1, p1, Lio/appmetrica/analytics/impl/Ie;->a:Ljava/lang/String;
+
+    iput-object v1, v0, Lio/appmetrica/analytics/impl/De;->a:Ljava/lang/String;
+
+    .line 5
+    :cond_0
+    iget-object v1, p1, Lio/appmetrica/analytics/impl/Ie;->b:Lorg/json/JSONObject;
+
+    invoke-virtual {v1}, Lorg/json/JSONObject;->toString()Ljava/lang/String;
+
+    move-result-object v1
+
+    iput-object v1, v0, Lio/appmetrica/analytics/impl/De;->b:Ljava/lang/String;
+
+    .line 6
+    iget-boolean v1, p1, Lio/appmetrica/analytics/impl/Ie;->c:Z
+
+    iput-boolean v1, v0, Lio/appmetrica/analytics/impl/De;->c:Z
+
+    .line 7
+    iget-boolean v1, p1, Lio/appmetrica/analytics/impl/Ie;->d:Z
+
+    iput-boolean v1, v0, Lio/appmetrica/analytics/impl/De;->d:Z
+
+    .line 8
+    iget-object v1, p0, Lio/appmetrica/analytics/impl/Je;->a:Lio/appmetrica/analytics/impl/He;
+
+    iget-object p1, p1, Lio/appmetrica/analytics/impl/Ie;->e:Lio/appmetrica/analytics/impl/Q7;
+
+    invoke-virtual {v1, p1}, Lio/appmetrica/analytics/impl/He;->a(Lio/appmetrica/analytics/impl/Q7;)Ljava/lang/Integer;
+
+    move-result-object p1
+
+    invoke-virtual {p1}, Ljava/lang/Integer;->intValue()I
+
+    move-result p1
+
+    iput p1, v0, Lio/appmetrica/analytics/impl/De;->e:I
+
+    return-object v0
+.end method
+
+.method public final a(Lio/appmetrica/analytics/impl/De;)Lio/appmetrica/analytics/impl/Ie;
+    .locals 7
+    .param p1    # Lio/appmetrica/analytics/impl/De;
+        .annotation build Landroidx/annotation/NonNull;
+        .end annotation
+    .end param
+    .annotation build Landroidx/annotation/NonNull;
+    .end annotation
+
+    .line 9
+    new-instance v6, Lio/appmetrica/analytics/impl/Ie;
+
+    iget-object v1, p1, Lio/appmetrica/analytics/impl/De;->a:Ljava/lang/String;
+
+    iget-object v0, p1, Lio/appmetrica/analytics/impl/De;->b:Ljava/lang/String;
+
+    .line 10
+    invoke-static {v0}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
+
+    move-result v2
+
+    if-nez v2, :cond_0
+
+    .line 12
+    :try_start_0
+    new-instance v2, Lorg/json/JSONObject;
+
+    invoke-direct {v2, v0}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
+    :try_end_0
+    .catchall {:try_start_0 .. :try_end_0} :catchall_0
+
+    goto :goto_0
+
+    .line 17
+    :catchall_0
+    :cond_0
+    new-instance v0, Lorg/json/JSONObject;
+
+    invoke-direct {v0}, Lorg/json/JSONObject;-><init>()V
+
+    move-object v2, v0
+
+    .line 18
+    :goto_0
+    iget-boolean v3, p1, Lio/appmetrica/analytics/impl/De;->c:Z
+
+    iget-boolean v4, p1, Lio/appmetrica/analytics/impl/De;->d:Z
+
+    iget-object v0, p0, Lio/appmetrica/analytics/impl/Je;->a:Lio/appmetrica/analytics/impl/He;
+
+    iget p1, p1, Lio/appmetrica/analytics/impl/De;->e:I
+
+    .line 21
+    invoke-static {p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
+
+    move-result-object p1
+
+    invoke-virtual {v0, p1}, Lio/appmetrica/analytics/impl/He;->a(Ljava/lang/Integer;)Lio/appmetrica/analytics/impl/Q7;
+
+    move-result-object v5
+
+    move-object v0, v6
+
+    invoke-direct/range {v0 .. v5}, Lio/appmetrica/analytics/impl/Ie;-><init>(Ljava/lang/String;Lorg/json/JSONObject;ZZLio/appmetrica/analytics/impl/Q7;)V
+
+    return-object v6
+.end method
+
+.method public final bridge synthetic fromModel(Ljava/lang/Object;)Ljava/lang/Object;
+    .locals 0
+    .param p1    # Ljava/lang/Object;
+        .annotation build Landroidx/annotation/NonNull;
+        .end annotation
+    .end param
+    .annotation build Landroidx/annotation/NonNull;
+    .end annotation
+
+    .line 1
+    check-cast p1, Lio/appmetrica/analytics/impl/Ie;
+
+    invoke-virtual {p0, p1}, Lio/appmetrica/analytics/impl/Je;->a(Lio/appmetrica/analytics/impl/Ie;)Lio/appmetrica/analytics/impl/De;
+
+    move-result-object p1
+
+    return-object p1
+.end method
+
+.method public final bridge synthetic toModel(Ljava/lang/Object;)Ljava/lang/Object;
+    .locals 0
+    .param p1    # Ljava/lang/Object;
+        .annotation build Landroidx/annotation/NonNull;
+        .end annotation
+    .end param
+    .annotation build Landroidx/annotation/NonNull;
+    .end annotation
+
+    .line 1
+    check-cast p1, Lio/appmetrica/analytics/impl/De;
+
+    invoke-virtual {p0, p1}, Lio/appmetrica/analytics/impl/Je;->a(Lio/appmetrica/analytics/impl/De;)Lio/appmetrica/analytics/impl/Ie;
+
+    move-result-object p1
+
+    return-object p1
+.end method

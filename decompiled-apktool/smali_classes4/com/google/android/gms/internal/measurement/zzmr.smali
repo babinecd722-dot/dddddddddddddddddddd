@@ -1,0 +1,30 @@
+.class abstract Lcom/google/android/gms/internal/measurement/zzmr;
+.super Ljava/lang/Object;
+.source "com.google.android.gms:play-services-measurement-base@@22.1.2"
+
+
+# direct methods
+.method public constructor <init>()V
+    .locals 0
+
+    .line 1
+    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    return-void
+.end method
+
+
+# virtual methods
+.method public abstract zza(I[BII)I
+.end method
+
+.method public abstract zza(Ljava/lang/String;[BII)I
+.end method
+
+.method public abstract zza([BII)Ljava/lang/String;
+    .annotation system Ldalvik/annotation/Throws;
+        value = {
+            Lcom/google/android/gms/internal/measurement/zzkb;
+        }
+    .end annotation
+.end method
