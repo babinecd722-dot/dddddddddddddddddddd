@@ -284,7 +284,7 @@
     .end annotation
 .end field
 
-.field public static final IS_WINTER_ENABLED:Z = false
+.field public static final IS_WINTER_ENABLED:Z = true
 
 .field public static final KEYBOARD_VERSION:Ljava/lang/String; = "keyboard_version"
     .annotation build Lorg/jetbrains/annotations/NotNull;

@@ -303,14 +303,12 @@
 
     .line 226
     :cond_6
-    const-string v0, "https://fastdl.ragerussia.online/"
-
-    sput-object v0, Lcom/blackhub/bronline/launcher/Settings;->CURRENT_CDN_URL:Ljava/lang/String;
+    # Removed fastdl backup - use only 62.109.21.131, do not switch CDN on errors
 
     .line 227
     iget-object v0, v1, Lcom/blackhub/bronline/launcher/viewmodel/MainActivityViewModel$checkUpdate$1;->this$0:Lcom/blackhub/bronline/launcher/viewmodel/MainActivityViewModel;
 
-    invoke-static {v0}, Lcom/blackhub/bronline/launcher/viewmodel/MainActivityViewModel;->access$getBackupCdnApi$p(Lcom/blackhub/bronline/launcher/viewmodel/MainActivityViewModel;)Lcom/blackhub/bronline/launcher/network/Api;
+    invoke-static {v0}, Lcom/blackhub/bronline/launcher/viewmodel/MainActivityViewModel;->access$getMainCdnApi$p(Lcom/blackhub/bronline/launcher/viewmodel/MainActivityViewModel;)Lcom/blackhub/bronline/launcher/network/Api;
 
     move-result-object v0
 
