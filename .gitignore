@@ -1,0 +1,13 @@
+# Original APK
+apk/
+
+# jadx output (can be regenerated from APK)
+decompiled-jadx/
+
+# Build output
+build/
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
