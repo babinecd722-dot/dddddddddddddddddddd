@@ -11,12 +11,16 @@
 
 ### Как получить реальный RakSamp на 51.75.232.67:1801
 
-1. **SAMP Mobile** (RakNet из коробки):
+1. **Black Russia Source (Parad1st)** — RakSamp в Bless-подобном лаунчере:
+   - Репо: `br-source/` (клон Black-Russia-Source)
+   - Уже пропатчено: **51.75.232.67:1801** в `CNetwork.cpp`
+   - Сборка: см. `br-source/RAKSAMP_51.75.232.67.md`
+
+2. **SAMP Mobile** (RakNet из коробки):
    - [Uptodown](https://samp-mobile.en.uptodown.com/android) или [Google Play](https://play.google.com/store/apps/details?id=com.samp.x1y2z)
    - Добавь сервер в избранное: **51.75.232.67:1801**
-   - Это полноценный RakSamp-клиент
 
-2. **Прокси** — если нужен именно лаунчер Bless:
+3. **Прокси** — если нужен именно лаунчер Bless (с ENet):
    - См. `proxy/README.md`
    - APK → прокси (51.75.232.67:1802) → RakSamp (51.75.232.67:1801)
 
