@@ -1,64 +1,33 @@
-# ENet→RakNet Proxy для Bless/RakSamp
+# Прокси Bless → RakSamp
 
-## Проблема
+## Конфигурация
 
-- **Bless/Black Russia** — транспорт ENet (собственный протокол)
-- **RakSamp** — транспорт RakNet (стандартный SA-MP)
-- Форматы пакетов несовместимы
+- **APK** подключается к **51.75.232.67:1802** (IP пользователя, порт прокси)
+- **Прокси** слушает 1802, пересылает на **127.0.0.1:1801** (RakSamp)
+- На сервере пользователя: RakSamp на 1801, прокси на 1802
 
-## Решение
-
-Прокси между клиентом и сервером:
-
-```
-[BR Client] --ENet--> [Proxy] --RakNet--> [RakSamp Server]
-     APK            listen:1802           51.75.232.67:1801
-```
-
-## Сборка полного прокси
-
-Требуется:
-1. **ENet** — https://github.com/lsalzman/enet (сервер, принимать от BR)
-2. **RakNet** — из RakSAMP (клиент, подключаться к RakSamp)
-3. Логика перевода пакетов (требуется анализ формата BR)
-
-### Шаги
+## Сборка
 
 ```bash
-# 1. Клонировать ENet
-git clone https://github.com/lsalzman/enet.git
-cd enet && mkdir build && cd build
-cmake .. && make
-
-# 2. Клонировать RakSAMP (для RakNet)
-git clone https://github.com/YashasSamaga/RakSAMP.git
-
-# 3. Собрать прокси (код в proxy.cpp нужно дописать)
-# - ENet host_create с address (слушать порт)
-# - enet_host_service, принимать пакеты от BR
-# - Извлекать payload из ENet
-# - RakClientInterface->Connect(raksamp_ip, port)
-# - Формировать RakNet пакеты из payload
-# - Отправлять на RakSamp
-# - Принимать ответы, оборачивать в ENet, отправлять BR
+cd proxy
+g++ -o full_proxy full_proxy.cpp -I./include libenet.a -lpthread
 ```
 
-## Текущий статус
+## Запуск на сервере 51.75.232.67
 
-Прокси-код — заглушка. Полная реализация требует:
+```bash
+./full_proxy 1802 127.0.0.1 1801
+```
 
-1. Анализа пакетов BR (Wireshark/tcpdump при подключении к BR серверу)
-2. Сопоставления полей BR ↔ SA-MP
-3. Обработки handshake (ENet Connect vs RakNet ID_CONNECTION_REQUEST)
+- Прокси слушает порт 1802 (BR клиент подключается сюда)
+- Пересылка на 127.0.0.1:1801 (RakSamp на этом же сервере)
 
-## Альтернатива: Frida
+## Если RakSamp на другом порту
 
-См. `patches/frida_enet_hook.js` — перенаправление `enet_host_connect` на прокси в runtime.
+```bash
+./full_proxy 1802 127.0.0.1 7777
+```
 
-## Патч APK
+## APK
 
-Прокси слушает на порту 1802. В smali поменять:
-- IP: адрес машины с прокси
-- Port: 1802
-
-Или оставить 51.75.232.67:1802 если прокси на том же сервере.
+Уже пропатчен: IP 51.75.232.67, порт 1802.
