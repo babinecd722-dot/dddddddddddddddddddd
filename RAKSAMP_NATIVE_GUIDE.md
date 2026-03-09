@@ -1,4 +1,11 @@
-# RakSamp Native — Гайд по доработке libblackrussia-client.so
+# RakSamp Native — Результаты реверса и решения
+
+## Выполненный реверс
+
+1. **libblackrussia-client.so** — анализ завершён (см. `analysis/REVERSE_ENGINEERING_FINDINGS.md`)
+2. **Транспорт**: ENet (не RakNet). BR использует `enet_host_connect`, `enet_peer_send`
+3. **Пакеты**: SA-MP-подобные RPC (Packet_PlayerSync и т.д.) внутри ENet
+4. **Вывод**: прямое подключение к RakSamp невозможно — нужен прокси
 
 ## Текущая ситуация
 
@@ -92,4 +99,23 @@ Black Russia изменяет RakNet:
 2. Найти, где и как BR формирует пакеты (протокол, RakNet/ENet).
 3. **Патчи** — внести изменения, чтобы клиент отправлял стандартные SA-MP пакеты.
 
-Без реверса и патчей нативного кода подключение к обычному RakSamp из Bless невозможно.
+## Реализованные компоненты
+
+| Компонент | Путь | Назначение |
+|-----------|------|------------|
+| Анализ | `analysis/REVERSE_ENGINEERING_FINDINGS.md` | Результаты реверса |
+| ENet-прокси | `proxy/enet_proxy` | Принимает BR, логирует пакеты |
+| Патчи APK | `patches/` | IP 51.75.232.67, порт 1802 (прокси) |
+| Frida-хук | `patches/frida_enet_hook.js` | Редirect в runtime |
+
+## Схема работы
+
+```
+[APK] --ENet:1802--> [proxy/enet_proxy] --(перевод)--> [RakSamp :1801]
+```
+
+APK подключается к **51.75.232.67:1802** (прокси). Прокси должен работать на сервере с RakSamp.
+
+## Полный прокси (ENet↔RakNet)
+
+Требуется доработка: парсинг ENet, извлечение payload, отправка через RakNet (RakSAMP). См. `proxy/README.md`.
