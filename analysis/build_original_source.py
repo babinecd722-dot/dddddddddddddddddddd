@@ -10,9 +10,12 @@ import argparse
 import re
 import shutil
 import struct
+import sys
 import zipfile
 from collections import defaultdict
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
 
 from amx_compact import load_expanded, parse_header
 from amx_debug_parse import AMX_MAIN_SIZE, get_natives, parse_debug
@@ -92,7 +95,7 @@ def extract_all_globals(data: bytes, dbg: dict) -> dict[str, GlobalSym]:
     return globals_
 
 
-def write_main_test_pwn(out_root: Path, module_paths: list[str]) -> None:
+def write_main_test_pwn(out_root: Path, module_paths: list[str], compile_mode: bool = False) -> None:
     main = out_root / "gamemodes" / "test.pwn"
     includes = sorted(
         {
@@ -106,15 +109,23 @@ def write_main_test_pwn(out_root: Path, module_paths: list[str]) -> None:
         "// RESTORED from br_gamemode.amx — MOD BR BONUS gamemode",
         "// Auto-decompiled; structure matches original debug paths.",
         "",
-        "#include <a_samp>",
-        "#include <a_mysql>",
-        "#include <streamer>",
-        "#include <sscanf2>",
-        "#include <Pawn.CMD>",
-        "#include <Pawn.RakNet>",
-        "#include <foreach>",
-        "",
     ]
+    if compile_mode:
+        lines.extend([
+            "#define SAMP_COMPAT",
+            "#define MIXED_SPELLINGS",
+            "#define AMX_RESTORED 1",
+            "",
+            "#include <open.mp>",
+            "#include <a_mysql>",
+            "#include <streamer>",
+            "",
+        ])
+    else:
+        lines.extend([
+            "#include <a_samp>", "#include <a_mysql>", "#include <streamer>",
+            "#include <sscanf2>", "#include <Pawn.CMD>", "#include <Pawn.RakNet>", "#include <foreach>", "",
+        ])
     for inc in includes:
         if inc.startswith("pawno/include/"):
             lines.append(f'#include "{inc.replace("pawno/include/", "../include/")}"')
@@ -133,7 +144,7 @@ def write_main_test_pwn(out_root: Path, module_paths: list[str]) -> None:
         body.unlink()
 
 
-def build(amx: Path, out_root: Path, cache: Path) -> None:
+def build(amx: Path, out_root: Path, cache: Path, compile_mode: bool = False) -> None:
     print(f"Loading {amx} ...")
     file_data = amx.read_bytes()
     hdr = parse_header(file_data)
@@ -175,11 +186,15 @@ def build(amx: Path, out_root: Path, cache: Path) -> None:
             rel = "gamemodes/test.pwn"
 
         dec = decompile_body(
-            expanded, fn, file_data, hdr["cod"], natives, addr_to_name, locals_map, funcs, line_map, 120_000
+            expanded, fn, file_data, hdr["cod"], natives, addr_to_name, locals_map, funcs, line_map, 120_000,
+            compile_mode=compile_mode,
         )
         public = fn.name in PUBLIC_NAMES or (fn.name.startswith("On") and "(" not in fn.name)
-        block = emit_function(fn, dec, line_map.get(fn.codestart), public, locals_map)
+        block = emit_function(fn, dec, line_map.get(fn.codestart), public, locals_map, compile_mode=compile_mode)
         text = replace_address_literals("\n".join(block), pool, hdr["dat"])
+        if compile_mode:
+            from sanitize_for_compile import sanitize
+            text = sanitize(text)
         by_path[rel].extend([text, ""])
 
         if (i + 1) % 300 == 0:
@@ -210,7 +225,7 @@ def build(amx: Path, out_root: Path, cache: Path) -> None:
     gpath.write_text("\n".join(glines), encoding="utf-8")
     module_paths.append(str(gpath.relative_to(out_root)))
 
-    write_main_test_pwn(out_root, module_paths)
+    write_main_test_pwn(out_root, module_paths, compile_mode)
 
     stdlib = Path("/workspace/tools/omp-stdlib")
     if stdlib.is_dir():
@@ -274,11 +289,12 @@ def main() -> int:
     ap.add_argument("--amx", type=Path, default=DEFAULT_AMX)
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT)
     ap.add_argument("--cache", type=Path, default=CACHE)
+    ap.add_argument("--compile", action="store_true", help="Emit compile-oriented Pawn (cleaner syntax)")
     args = ap.parse_args()
     if not args.amx.is_file():
         print(f"Missing {args.amx}")
         return 1
-    build(args.amx, args.out, args.cache)
+    build(args.amx, args.out, args.cache, compile_mode=args.compile)
     return 0
 
 

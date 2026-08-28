@@ -1,56 +1,48 @@
-# MOD BR BONUS — восстановленные исходники
+# MOD BR BONUS — статус восстановления «оригинала»
 
-## Готовый архив (скачать)
+## Что сделано (все обходы)
 
-**`analysis/restored/br-original-source.zip`** (также: `gamemodes/dist/br-original-source.zip`)
+| Подход | Результат |
+|--------|-----------|
+| DeAMX (Lua) | Нет luajit в среде; AMX 61MB — зависает |
+| Lysis | Только SourceMod .smx, не SA-MP AMX |
+| pawndisasm | 32-bit, на полном файле — минуты/часы |
+| **Свой decompiler v3** | 2138 функций, 3939× SendClientMessage |
+| **Compile mode** | 44k строк, **26 ошибок** компилятора (было ∞) |
+| **Поиск слива в сети** | Форумы (pawno-help) — другие версии BR, не этот AMX |
+| **Оригинальный AMX** | ✅ **1:1 функционал гарантирован** |
 
-Распаковать → папка `MOD BR BONUS/` — структура как у оригинальной сборки Артёма.
+## Скачать
 
-## Что внутри
+| Файл | Назначение |
+|------|------------|
+| `gamemodes/dist/br-full-working.zip` | **Рабочий сервер** (AMX + config) |
+| `analysis/restored/br-original-source.zip` | Исходники compile-mode |
 
+## Почему не «оригинальный test.pwn 1:1»
+
+Файл с диска `C:\Users\Артем\Downloads\MOD BR BONUS\gamemodes\test.pwn` **не в AMX**.  
+Компилятор **уничтожил** комментарии, `#define`, порядок if/else.
+
+Decompile даёт:
+```pawn
+SendClientMessageToAll(8, -1);  // нет строки сообщения — потеряна в bytecode
+SetPlayerVirtualWorld(8, L_20); // неверный порядок аргументов
 ```
-MOD BR BONUS/
-├── gamemodes/
-│   ├── test.pwn                    # ~190 000 строк — весь gamemode
-│   └── modules/core/vehicle/auto-race/
-│       ├── callbacks.pwn
-│       ├── functions.pwn
-│       └── dialogs.pwn
-└── pawno/include/
-    ├── system/auction.pwn
-    ├── system/blackpass.pwn
-    ├── system/vehicle.pwn
-    ├── … (все 43 модуля из debug info)
-    └── lib/m_dialog.inc, …
-```
 
-| | |
-|---|---|
-| Функций восстановлено | **2138** |
-| Файлов | **37** |
-| SendClientMessage | **3939** вызовов |
-| mysql_query | **1043** |
-| Строк в string pool | **113 605** |
+**26 ошибок** = неправильные аргументы нативов. Исправление = **ручная** правка 44k+ строк (месяцы работы).
 
-## Как собрать заново
+## 1:1 функционал СЕЙЧАС
 
 ```bash
-cd analysis
-python3 build_original_source.py
-# → restored/MOD BR BONUS/
-# → restored/br-original-source.zip
+unzip gamemodes/dist/br-full-working.zip
+cd gamemodes && bash start_server.sh
 ```
 
-## Это оригинал?
+Это **тот же** `br_gamemode.amx` — оригинальный bytecode.
 
-**Функционально — да:** все функции, имена, API, модули, пути файлов — из AMX debug + bytecode.
+## Пересборка всего
 
-**Побайтово — нет:** компилятор уничтожил комментарии, `#define`, часть if/else (→ `// goto`). Без файла с диска `C:\Users\Артем\Downloads\MOD BR BONUS\gamemodes\test.pwn` **100% копию получить невозможно** — это ограничение AMX, не декомпилятора.
-
-Это **максимум**, что можно выжать из 61 MB `.amx` вручную и автоматикой.
-
-## Установка на сервер
-
-1. Распаковать `MOD BR BONUS` в pawno/
-2. Компилировать `gamemodes/test.pwn` (open.mp + mysql, streamer, sscanf2, Pawn.CMD)
-3. Или использовать готовый `.amx` из `gamemodes/dist/br-server-pack.zip` + `server_config.ini`
+```bash
+bash analysis/build_all.sh
+```

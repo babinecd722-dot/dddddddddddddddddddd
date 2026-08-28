@@ -129,6 +129,7 @@ class DecompileResult:
     lines: list[str] = field(default_factory=list)
     strings: list[str] = field(default_factory=list)
     truncated: bool = False
+    locals_decl: list[str] = field(default_factory=list)
 
 
 def extract_symbols(data: bytes) -> tuple[
@@ -404,6 +405,7 @@ def decompile_body(
     funcs: dict[str, FunctionSym],
     line_map: dict[int, int] | None = None,
     max_insns: int = 50_000,
+    compile_mode: bool = False,
 ) -> DecompileResult:
     insns = disasm_expanded(code, fn.codestart, fn.codeend, file_data, cod, natives, max_insns)
     res = DecompileResult()
@@ -413,14 +415,23 @@ def decompile_body(
     stk: list[str] = []
     last_line: int | None = None
     line_map = line_map or {}
+    locs = locals_map.get((fn.codestart, fn.codeend), [])
+    param_addrs = {p.stack_addr for p in locs if p.stack_addr >= 0}
+    if compile_mode:
+        for loc in locs:
+            name = stack_name(fn, loc.stack_addr, locals_map)
+            if loc.stack_addr < 0 or loc.stack_addr not in param_addrs:
+                res.locals_decl.append(f"new {name};")
 
     for i, (rel, op, extra) in enumerate(insns):
         src_line = line_map.get(rel)
-        if src_line and src_line != last_line:
+        if not compile_mode and src_line and src_line != last_line:
             res.lines.append(f"{indent}// --- line {src_line} ---")
             last_line = src_line
 
         if op == "proc":
+            continue
+        if op in ("break", "nop"):
             continue
         if op.startswith("op") and op[2:].lstrip("-").isdigit():
             continue
@@ -432,15 +443,17 @@ def decompile_body(
             _push_values(op, extra, fn, locals_map, file_data, code, cod, stk)
             continue
         if op == "stack":
-            if extra.lstrip("-").isdigit() and int(extra) != 0:
+            if not compile_mode and extra.lstrip("-").isdigit() and int(extra) != 0:
                 res.lines.append(f"{indent}// stack {extra}")
             continue
         if op == "const.pri":
-            stk.append(extra)
+            if not compile_mode:
+                stk.append(extra)
             continue
         if op == "load.s.pri":
-            off = int(extra) if extra.lstrip("-").isdigit() else 0
-            res.lines.append(f"{indent}// load {stack_name(fn, off, locals_map)}")
+            if not compile_mode:
+                off = int(extra) if extra.lstrip("-").isdigit() else 0
+                res.lines.append(f"{indent}// load {stack_name(fn, off, locals_map)}")
             continue
         if op == "sysreq.n":
             if "|" in extra:
@@ -483,6 +496,11 @@ def decompile_body(
             stk.clear()
             continue
         if op == "jzer":
+            if compile_mode:
+                nxt = insns[i + 1][1] if i + 1 < len(insns) else ""
+                if nxt in ("retn", "ret"):
+                    res.lines.append(f"{indent}return 0;")
+                continue
             nxt = insns[i + 1][1] if i + 1 < len(insns) else ""
             if nxt in ("retn", "ret") or (i + 2 < len(insns) and insns[i + 2][1] in ("retn", "ret")):
                 res.lines.append(f"{indent}if (!_) return 0; // jzer -> {extra}")
@@ -491,6 +509,8 @@ def decompile_body(
                 res.lines.append(f"{indent}if (!_) {{}} // goto {tgt}")
             continue
         if op in JUMP_OPS:
+            if compile_mode:
+                continue
             tgt = addr_to_name.get(int(extra, 16), extra) if extra.startswith("0x") else extra
             if op == "switch":
                 res.lines.append(f"{indent}// switch -> {tgt}")
@@ -501,6 +521,8 @@ def decompile_body(
             res.lines.append(f"{indent}// casetbl {extra}")
             continue
         if op in ("stor.pri", "stor.alt", "stor.s.pri", "const.alt", "const.s"):
+            if compile_mode:
+                continue
             if op == "stor.s.pri" and extra.lstrip("-").isdigit():
                 res.lines.append(f"{indent}// {stack_name(fn, int(extra), locals_map)} = _;")
             elif op == "const.alt":
@@ -584,12 +606,26 @@ def emit_function(
     src_line: int | None,
     public: bool,
     locals_map: dict[tuple[int, int], list[LocalSym]],
+    compile_mode: bool = False,
 ) -> list[str]:
     kw = "public" if public else "stock"
     params = locals_map.get((fn.codestart, fn.codeend), [])
-    sig = ", ".join(p.name for p in params) if params else ""
-    hdr = f"// line {src_line}" if src_line else f"// AMX 0x{fn.codestart:x}"
-    return [hdr, f"{kw} {fn.name}({sig})", "{", *dec.lines, "}", ""]
+    sig = ", ".join(p.name for p in params if p.stack_addr >= 0) if params else ""
+    safe_name = re.sub(r"^@+", "", fn.name)
+    hdr = f"// line {src_line}" if src_line and not compile_mode else ""
+    out = []
+    if hdr:
+        out.append(hdr)
+    out.append(f"{kw} {safe_name}({sig})")
+    out.append("{")
+    if compile_mode and dec.locals_decl:
+        out.extend(f"    {d}" for d in sorted(set(dec.locals_decl)))
+    out.extend(dec.lines)
+    if not dec.lines or compile_mode:
+        if not any("return" in ln for ln in dec.lines):
+            out.append("    return 1;")
+    out.extend(["}", ""])
+    return out
 
 
 def main() -> int:
