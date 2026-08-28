@@ -1,52 +1,69 @@
-# Black Russia Gamemode — External Database Config
+# Black Russia Gamemode — Server Config Pack
 
-The compiled `br_gamemode.amx` embeds MySQL credentials in the binary (obfuscated).
-To change database settings **without recompiling**, use `database.ini` + the patch tool.
+Compiled `br_gamemode.amx` embeds MySQL credentials, project name, and social links
+inside the binary. Change everything via `server_config.ini` without recompiling `.pwn`.
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `br_gamemode.amx` | Server gamemode (copy from analysis or Google Drive — **not in git**, 63 MB) |
-| `database.ini` | MySQL host, user, password, database, charset |
-| `apply_database_config.py` | Writes ini values into the AMX binary |
+| `br_gamemode.amx` | Patched gamemode (copy to server) |
+| `br_gamemode.amx.bak` | Clean original — used as patch source each start |
+| `server_config.ini` | MySQL, project name, Telegram/VK/forum links |
+| `apply_server_config.py` | Writes ini into AMX (DB offsets + global string replace) |
+| `start_server.sh` | Applies config from `.bak`, then starts server |
+| `INSTALL_RU.txt` | Russian install guide |
+
+Legacy: `database.ini` + `apply_database_config.py` (MySQL only) still work.
 
 ## Quick start
 
 ```bash
 cd gamemodes
-# Edit database.ini first
-python3 apply_database_config.py
-# Copy br_gamemode.amx to your SA-MP/open.mp gamemodes folder
+# Edit server_config.ini
+python3 apply_server_config.py --source br_gamemode.amx.bak
+chmod +x start_server.sh
+./start_server.sh
 ```
 
-## Extracted defaults (from RE)
+## Config sections
 
-```
+```ini
+[mysql]
 host=127.0.0.1
-user=gs345455
-password=gs345455
-database=W4Oel59iP1PV
+user=...
+password=...
+database=...
 charset=cp1251
+
+[project]
+name=RAME RUSSIA          ; 141 replacements in AMX
+name_alt=BLACK RUSSIA
+bonus_tag=BRBONUS
+bonus_label=BR BONUS
+
+[links]
+telegram=t.me/brbonustest
+telegram_mobile=t.me/prizmamobile
+forum=forum.samp-tape.ru
+site=SAMP-TAPE.RU
+vk=vk.com/samp_mobi
 ```
 
-## IP checks in mod?
+## Why patch-on-start?
 
-**No server IP whitelist** was found. `GetPlayerIp` is used for admin/logging only
-(`pc_cmd_getip`, ban commands). Game server address is **not** validated against a hardcoded IP in this AMX.
+True runtime `fopen()` + INI parsing inside this AMX is not feasible without
+source code (compact bytecode). `start_server.sh` applies config on every launch
+so edits to `server_config.ini` take effect after restart.
 
-## Why not runtime .ini loading?
+## Release ZIP
 
-The AMX uses **compact bytecode encoding** — injecting `fopen()` + parser without
-source code is not practical. The patch-on-start workflow is the reliable approach:
-run `apply_database_config.py` before starting the server (or in your start script).
-
-## Start script example
+Build install package:
 
 ```bash
-#!/bin/bash
-cd /path/to/server/gamemodes
-python3 apply_database_config.py
-cd ..
-./samp03svr
+cd gamemodes
+python3 apply_server_config.py --source br_gamemode.amx.bak
+bash build_release.sh
 ```
+
+Output: `dist/br-server-pack.zip`

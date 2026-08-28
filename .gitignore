@@ -5,4 +5,5 @@ blessrussia_modified.apk
 blessrussia_modified.apk
 blessrussia_decompiled/
 *.zip
+!gamemodes/dist/br-server-pack.zip
 br-source/

@@ -1,24 +1,13 @@
 #!/usr/bin/env python3
 """
-Patch br_gamemode.amx database credentials from database.ini.
+Patch br_gamemode.amx MySQL credentials from database.ini (legacy).
 
-The compiled gamemode stores MySQL settings inside the AMX data section
-(obfuscated with 0x80 byte prefix before letters). This tool writes new
-values from database.ini into the binary so you can change DB settings
-without recompiling the .pwn source.
+For full config (project name, links, MySQL) use apply_server_config.py
+and server_config.ini instead.
 
-**Field size limits** (AMX slot size — cannot exceed without recompiling):
-
-| Field | Max length | Notes |
-|-------|------------|-------|
-| host | 9 chars | plain ASCII, e.g. `127.0.0.1` |
-| user | ~5 letters | obfuscated: 2 bytes per letter |
-| password | ~5 letters | same encoding |
-| database | ~40 letters | longer names OK |
-
-Usage (from gamemodes/ directory):
+Usage:
     python3 apply_database_config.py
-    python3 apply_database_config.py --ini custom.ini --amx br_gamemode.amx
+    python3 apply_server_config.py   # recommended
 """
 from __future__ import annotations
 
@@ -49,18 +38,18 @@ LIMITS = {
 
 
 def encode_obfuscated(value: str) -> bytes:
-    """Match BR AMX string encoding: 0x80 before each letter, digits in plain runs."""
+    """Match BR AMX string encoding: 0x80 before each letter/underscore, digits in plain runs."""
     out = bytearray()
     i = 0
     while i < len(value):
         ch = value[i]
-        if ch.isalpha():
+        if ch.isalpha() or ch == '_':
             out.append(0x80)
             out.append(ord(ch))
             i += 1
         else:
             j = i
-            while j < len(value) and not value[j].isalpha():
+            while j < len(value) and not value[j].isalpha() and value[j] != '_':
                 j += 1
             out.extend(value[i:j].encode('ascii'))
             i = j
