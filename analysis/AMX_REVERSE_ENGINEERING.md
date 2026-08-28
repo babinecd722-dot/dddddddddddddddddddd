@@ -132,12 +132,32 @@ analysis/
 
 ---
 
-## Conclusions & Next Steps
+## MySQL Credentials (extracted)
 
-1. **This AMX will not give you a static game server IP:port** — by design credentials and server list are runtime/MySQL/packet-driven.
-2. **Classifier ≠ server list** — it's character class selection (`class_list`/`class_row`).
-3. Ports **8000/8101** in the file are **radio CDN**, not game server.
-4. For **client connect IP**, continue RE on **libblackrussia-client.so / JNI JSON** (already documented in this repo).
-5. For **live server IP**, intercept at runtime: MySQL queries on server start, or BR mobile client traffic / JSON `ip`+`port` keys.
+| Field | Value | File offset |
+|-------|-------|-------------|
+| host | `127.0.0.1` | 53890975 (plain ASCII) |
+| user | `gs345455` | 53890985 (0x80-obfuscated) |
+| password | `gs345455` | 53890996 |
+| database | `W4Oel59iP1PV` | 53891007 |
+| charset | `cp1251` | 53891097 |
 
-To extract MySQL host at runtime: run gamemode with logging, or dump AMX heap after `OnGameModeInit` when `mysql_connect` resolves strings.
+**IP whitelist:** not present. `GetPlayerIp` used for admin commands only.
+
+## External database config (implemented)
+
+See `gamemodes/`:
+
+- `database.ini` — edit MySQL settings here
+- `apply_database_config.py` — patches `br_gamemode.amx` before server start
+- `br_gamemode.amx` — gamemode binary
+
+Runtime `.ini` loading inside AMX is not feasible without source (compact bytecode). Patch-on-start is the supported workflow.
+
+## Conclusions
+
+1. **No hardcoded game server IP** in this AMX.
+2. **Classifier** = character class UI, not server browser.
+3. Ports **8000/8101** = radio streams, not game server.
+4. **MySQL credentials** are embedded but patchable via `gamemodes/apply_database_config.py`.
+5. **Client connect IP** remains in JNI/native layer (see repo patches).
