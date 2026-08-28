@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from amx_compact import load_expanded, parse_header
 from amx_debug_parse import AMX_MAIN_SIZE, get_natives, parse_debug
 from amx_string_pool import build_string_pool, replace_address_literals
+from clean_decompiled import clean_pawn_source
 from amx_to_pwn import (
     DecompileResult,
     FunctionSym,
@@ -95,7 +96,7 @@ def extract_all_globals(data: bytes, dbg: dict) -> dict[str, GlobalSym]:
     return globals_
 
 
-def write_main_test_pwn(out_root: Path, module_paths: list[str], compile_mode: bool = False) -> None:
+def write_main_test_pwn(out_root: Path, module_paths: list[str], compile_mode: bool = False, clean_mode: bool = True) -> None:
     main = out_root / "gamemodes" / "test.pwn"
     includes = sorted(
         {
@@ -105,11 +106,13 @@ def write_main_test_pwn(out_root: Path, module_paths: list[str], compile_mode: b
             and p.endswith((".inc", ".pwn"))
         }
     )
-    lines = [
-        "// RESTORED from br_gamemode.amx — MOD BR BONUS gamemode",
-        "// Auto-decompiled; structure matches original debug paths.",
-        "",
-    ]
+    lines: list[str] = []
+    if not clean_mode:
+        lines.extend([
+            "// RESTORED from br_gamemode.amx — MOD BR BONUS gamemode",
+            "// Auto-decompiled; structure matches original debug paths.",
+            "",
+        ])
     if compile_mode:
         lines.extend([
             "#define SAMP_COMPAT",
@@ -135,8 +138,9 @@ def write_main_test_pwn(out_root: Path, module_paths: list[str], compile_mode: b
     body = out_root / "gamemodes" / "_test_body.pwn"
     if body.is_file():
         raw = body.read_text(encoding="utf-8")
-        # strip auto header from body chunk
         raw = re.sub(r"^// RESTORED: gamemodes/test\.pwn\n// Functions: \d+\n\n", "", raw)
+        if clean_mode:
+            raw = clean_pawn_source(raw)
         lines.append(raw)
     main.parent.mkdir(parents=True, exist_ok=True)
     main.write_text("\n".join(lines), encoding="utf-8")
@@ -144,7 +148,7 @@ def write_main_test_pwn(out_root: Path, module_paths: list[str], compile_mode: b
         body.unlink()
 
 
-def build(amx: Path, out_root: Path, cache: Path, compile_mode: bool = False) -> None:
+def build(amx: Path, out_root: Path, cache: Path, compile_mode: bool = False, clean_mode: bool = True) -> None:
     print(f"Loading {amx} ...")
     file_data = amx.read_bytes()
     hdr = parse_header(file_data)
@@ -188,13 +192,19 @@ def build(amx: Path, out_root: Path, cache: Path, compile_mode: bool = False) ->
         dec = decompile_body(
             expanded, fn, file_data, hdr["cod"], natives, addr_to_name, locals_map, funcs, line_map, 120_000,
             compile_mode=compile_mode,
+            clean_mode=clean_mode,
         )
         public = fn.name in PUBLIC_NAMES or (fn.name.startswith("On") and "(" not in fn.name)
-        block = emit_function(fn, dec, line_map.get(fn.codestart), public, locals_map, compile_mode=compile_mode)
+        block = emit_function(
+            fn, dec, line_map.get(fn.codestart), public, locals_map,
+            compile_mode=compile_mode, clean_mode=clean_mode,
+        )
         text = replace_address_literals("\n".join(block), pool, hdr["dat"])
         if compile_mode:
             from sanitize_for_compile import sanitize
             text = sanitize(text)
+        if clean_mode:
+            text = clean_pawn_source(text)
         by_path[rel].extend([text, ""])
 
         if (i + 1) % 300 == 0:
@@ -204,11 +214,13 @@ def build(amx: Path, out_root: Path, cache: Path, compile_mode: bool = False) ->
     for rel, chunks in by_path.items():
         out_path = out_root / rel
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        header = [
-            f"// RESTORED: {rel}",
-            f"// Functions: {sum(1 for c in chunks if c.startswith('public ') or c.startswith('stock '))}",
-            "",
-        ]
+        header: list[str] = []
+        if not clean_mode:
+            header = [
+                f"// RESTORED: {rel}",
+                f"// Functions: {sum(1 for c in chunks if c.startswith('public ') or c.startswith('stock '))}",
+                "",
+            ]
         body = "\n".join(header + chunks)
         if rel == "gamemodes/test.pwn":
             (out_root / "gamemodes" / "_test_body.pwn").write_text(body, encoding="utf-8")
@@ -219,13 +231,18 @@ def build(amx: Path, out_root: Path, cache: Path, compile_mode: bool = False) ->
     # Globals
     gpath = out_root / "pawno" / "include" / "_restored_globals.inc"
     gpath.parent.mkdir(parents=True, exist_ok=True)
-    glines = ["// Restored global variables from AMX debug symbols", ""]
+    glines: list[str] = []
+    if not clean_mode:
+        glines = ["// Restored global variables from AMX debug symbols", ""]
     for g in sorted(globals_.values(), key=lambda x: x.name):
         glines.append(f"new {g.name}{'[]' if g.dim else ''};")
-    gpath.write_text("\n".join(glines), encoding="utf-8")
+    if glines:
+        gpath.write_text("\n".join(glines) + "\n", encoding="utf-8")
+    else:
+        gpath.write_text("", encoding="utf-8")
     module_paths.append(str(gpath.relative_to(out_root)))
 
-    write_main_test_pwn(out_root, module_paths, compile_mode)
+    write_main_test_pwn(out_root, module_paths, compile_mode, clean_mode)
 
     stdlib = Path("/workspace/tools/omp-stdlib")
     if stdlib.is_dir():
@@ -239,38 +256,35 @@ def build(amx: Path, out_root: Path, cache: Path, compile_mode: bool = False) ->
         print("Copied open.mp stdlib includes")
 
     # README
+    total_lines = sum(1 for fp in out_root.rglob("*.pwn") for _ in open(fp, encoding="utf-8"))
     readme = out_root.parent / "README_RESTORED_RU.md"
     readme.write_text(
         f"""# MOD BR BONUS — восстановленные исходники из AMX
 
 ## Содержимое
 
-Папка `MOD BR BONUS/` повторяет структуру оригинальной сборки (43 файла debug info):
-
 - `gamemodes/test.pwn` — главный gamemode
-- `gamemodes/modules/...` — модули (auto-race и др.)
+- `gamemodes/modules/...` — модули
 - `pawno/include/system/*.pwn` — системные скрипты
-- `pawno/include/*.inc` — include-файлы
 
 ## Статистика
 
 | | |
 |---|---|
 | Функций | {len(funcs)} |
-| Globals | {len(globals_)} |
-| Строк в pool | {len(pool)} |
+| Строк кода (.pwn) | ~{total_lines} |
+| Строк в string pool | {len(pool)} |
 | Файлов | {len(by_path)} |
+| Режим | {"clean (без комментариев декомпилятора)" if clean_mode else "verbose"} |
+
+## Скачать
+
+`analysis/restored/br-original-source.zip`
 
 ## Важно
 
-Это **максимальное восстановление из bytecode**, не побайтовая копия оригинала.
-Комментарии и `#define` компилятор уничтожил. Логика, имена функций и API-вызовы — из debug.
-
-Для компиляции нужен open.mp/SA-MP SDK + include-ы (streamer, mysql, sscanf2, Pawn.CMD).
-
-## Сборка ZIP
-
-`analysis/restored/br-original-source.zip`
+Восстановление из bytecode, не побайтовая копия оригинала.
+Для **1:1 runtime** — `gamemodes/dist/br-full-working.zip` (оригинальный AMX).
 """,
         encoding="utf-8",
     )
@@ -290,11 +304,12 @@ def main() -> int:
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT)
     ap.add_argument("--cache", type=Path, default=CACHE)
     ap.add_argument("--compile", action="store_true", help="Emit compile-oriented Pawn (cleaner syntax)")
+    ap.add_argument("--verbose", action="store_true", help="Keep decompiler comments (line markers, stack, load)")
     args = ap.parse_args()
     if not args.amx.is_file():
         print(f"Missing {args.amx}")
         return 1
-    build(args.amx, args.out, args.cache, compile_mode=args.compile)
+    build(args.amx, args.out, args.cache, compile_mode=args.compile, clean_mode=not args.verbose)
     return 0
 
 

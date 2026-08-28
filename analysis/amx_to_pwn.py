@@ -358,10 +358,12 @@ def _resolve_arg_count(name: str, lookback: int, stk_len: int) -> int:
     return stk_len
 
 
-def _emit_call(name: str, args: list[str], indent: str, lines: list[str]) -> None:
+def _emit_call(name: str, args: list[str], indent: str, lines: list[str], clean_mode: bool = False) -> None:
     args = [a for a in args if a != "_"]
     if args:
         lines.append(f"{indent}{name}({', '.join(reversed(args))});")
+    elif clean_mode:
+        return
     elif name in NATIVE_ARG_HINTS:
         lines.append(f"{indent}// {name}(/* {NATIVE_ARG_HINTS[name]} args — stack lost */);")
     else:
@@ -435,6 +437,7 @@ def decompile_body(
     line_map: dict[int, int] | None = None,
     max_insns: int = 50_000,
     compile_mode: bool = False,
+    clean_mode: bool = False,
 ) -> DecompileResult:
     insns = disasm_expanded(code, fn.codestart, fn.codeend, file_data, cod, natives, max_insns)
     res = DecompileResult()
@@ -455,9 +458,11 @@ def decompile_body(
             if loc.stack_addr >= 12 and loc.stack_addr not in param_addrs:
                 res.locals_decl.append(f"new {name};")
 
+    no_comments = compile_mode or clean_mode
+
     for i, (rel, op, extra) in enumerate(insns):
         src_line = line_map.get(rel)
-        if not compile_mode and src_line and src_line != last_line:
+        if not no_comments and src_line and src_line != last_line:
             res.lines.append(f"{indent}// --- line {src_line} ---")
             last_line = src_line
 
@@ -475,15 +480,15 @@ def decompile_body(
             _push_values(op, extra, fn, locals_map, file_data, code, cod, stk)
             continue
         if op == "stack":
-            if not compile_mode and extra.lstrip("-").isdigit() and int(extra) != 0:
+            if not no_comments and extra.lstrip("-").isdigit() and int(extra) != 0:
                 res.lines.append(f"{indent}// stack {extra}")
             continue
         if op == "const.pri":
-            if not compile_mode:
+            if not no_comments:
                 stk.append(extra)
             continue
         if op == "load.s.pri":
-            if not compile_mode:
+            if not no_comments:
                 off = int(extra) if extra.lstrip("-").isdigit() else 0
                 res.lines.append(f"{indent}// load {stack_name(fn, off, locals_map)}")
             continue
@@ -498,7 +503,7 @@ def decompile_body(
                 n = _resolve_arg_count(native, _args_before(insns, i, hint), len(stk))
             call_args = _pick_call_args(stk, n, insns, i, NATIVE_ARG_HINTS.get(native, 0))
             stk = stk[: -len(call_args)] if call_args else stk
-            _emit_call(native, call_args, indent, res.lines)
+            _emit_call(native, call_args, indent, res.lines, clean_mode)
             continue
         if op == "sysreq.c":
             native = extra
@@ -507,7 +512,7 @@ def decompile_body(
             n = _resolve_arg_count(native, lookback, len(stk))
             call_args = _pick_call_args(stk, n, insns, i, hint)
             stk = stk[: -len(call_args)] if call_args else stk
-            _emit_call(native, call_args, indent, res.lines)
+            _emit_call(native, call_args, indent, res.lines, clean_mode)
             continue
         if op == "call":
             if not extra:
@@ -521,7 +526,7 @@ def decompile_body(
                     n = len(cparams) if cparams else len(stk)
                 call_args = stk[-n:] if n and len(stk) >= n else stk[:]
                 stk = stk[:-n] if n else stk
-                _emit_call(callee, call_args, indent, res.lines)
+                _emit_call(callee, call_args, indent, res.lines, clean_mode)
             continue
         if op in ("retn", "ret"):
             if not res.lines or "return" not in res.lines[-1]:
@@ -530,26 +535,25 @@ def decompile_body(
             continue
         if op == "jzer":
             nxt = insns[i + 1][1] if i + 1 < len(insns) else ""
-            tgt = addr_to_name.get(int(extra, 16), extra) if extra.startswith("0x") else extra
             if nxt in ("retn", "ret") or (i + 2 < len(insns) and insns[i + 2][1] in ("retn", "ret")):
-                res.lines.append(f"{indent}if (!_) return 0; // jzer @ {tgt}")
+                res.lines.append(f"{indent}if (!_) return 0;")
             else:
-                res.lines.append(f"{indent}if (!_) goto lbl_{extra}; // jzer")
+                res.lines.append(f"{indent}if (!_) goto lbl_{extra};")
             continue
         if op in JUMP_OPS:
-            tgt = addr_to_name.get(int(extra, 16), extra) if extra.startswith("0x") else extra
             if op == "switch":
-                res.lines.append(f"{indent}switch (_) // -> {tgt}")
+                res.lines.append(f"{indent}switch (_)")
             elif op == "jnz":
-                res.lines.append(f"{indent}if (_) goto lbl_{extra}; // jnz")
+                res.lines.append(f"{indent}if (_) goto lbl_{extra};")
             else:
-                res.lines.append(f"{indent}goto lbl_{extra}; // {op} {tgt}")
+                res.lines.append(f"{indent}goto lbl_{extra};")
             continue
         if op == "casetbl":
-            res.lines.append(f"{indent}// casetbl {extra}")
+            if not no_comments:
+                res.lines.append(f"{indent}// casetbl {extra}")
             continue
         if op in ("stor.pri", "stor.alt", "stor.s.pri", "const.alt", "const.s"):
-            if compile_mode:
+            if no_comments:
                 continue
             if op == "stor.s.pri" and extra.lstrip("-").isdigit():
                 res.lines.append(f"{indent}// {stack_name(fn, int(extra), locals_map)} = _;")
@@ -635,12 +639,20 @@ def emit_function(
     public: bool,
     locals_map: dict[tuple[int, int], list[LocalSym]],
     compile_mode: bool = False,
+    clean_mode: bool = False,
 ) -> list[str]:
     kw = "public" if public else "stock"
     params = locals_map.get((fn.codestart, fn.codeend), [])
     sig = ", ".join(p.name for p in params if p.stack_addr >= 0) if params else ""
-    hdr = f"// line {src_line} | AMX 0x{fn.codestart:x}-0x{fn.codeend:x}" if src_line else f"// AMX 0x{fn.codestart:x}-0x{fn.codeend:x}"
-    out = [hdr, f"{kw} {fn.name}({sig})", "{"]
+    out: list[str] = []
+    if not clean_mode and not compile_mode:
+        hdr = (
+            f"// line {src_line} | AMX 0x{fn.codestart:x}-0x{fn.codeend:x}"
+            if src_line
+            else f"// AMX 0x{fn.codestart:x}-0x{fn.codeend:x}"
+        )
+        out.append(hdr)
+    out.extend([f"{kw} {fn.name}({sig})", "{"])
     if dec.locals_decl:
         out.extend(f"    {d}" for d in sorted(set(dec.locals_decl)))
     out.extend(dec.lines)
