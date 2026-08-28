@@ -327,10 +327,20 @@ def _args_before(insns: list[tuple[int, str, str]], idx: int, hint: int = 0) -> 
             continue
         break
     if hint > 0 and count == hint + 1:
-        op, ex = insns[idx - 1][1], insns[idx - 1][2]
+        op, ex = insns[j + 1][1], insns[j + 1][2]
         if op == "push.c" and ex.lstrip("-").isdigit() and abs(int(ex)) < 512:
             return hint
     return count
+
+
+def _trailing_push_artifact(insns: list[tuple[int, str, str]], idx: int, n: int) -> bool:
+    """True when the insn right before sysreq is a small push.c stack-size artifact."""
+    if idx <= 0 or n <= 0:
+        return False
+    op, ex = insns[idx - 1][1], insns[idx - 1][2]
+    if op != "push.c" or not ex.lstrip("-").isdigit() or abs(int(ex)) >= 512:
+        return False
+    return _args_before(insns, idx, 0) >= n + 1
 
 
 def _resolve_arg_count(name: str, lookback: int, stk_len: int) -> int:
@@ -356,6 +366,25 @@ def _emit_call(name: str, args: list[str], indent: str, lines: list[str]) -> Non
         lines.append(f"{indent}// {name}(/* {NATIVE_ARG_HINTS[name]} args — stack lost */);")
     else:
         lines.append(f"{indent}{name}();")
+
+
+def _pick_call_args(
+    stk: list[str],
+    n: int,
+    insns: list[tuple[int, str, str]],
+    idx: int,
+    hint: int,
+) -> list[str]:
+    """Pick n native args; skip trailing compiler artifact push when lookback == hint+1."""
+    if n <= 0:
+        return []
+    if not stk:
+        return []
+    if _trailing_push_artifact(insns, idx, n) and len(stk) >= n + 1:
+        return stk[-(n + 1) : -1]
+    if len(stk) >= n:
+        return stk[-n:]
+    return stk[:]
 
 
 def _push_values(
@@ -417,10 +446,13 @@ def decompile_body(
     line_map = line_map or {}
     locs = locals_map.get((fn.codestart, fn.codeend), [])
     param_addrs = {p.stack_addr for p in locs if p.stack_addr >= 0}
-    if compile_mode:
-        for loc in locs:
-            name = stack_name(fn, loc.stack_addr, locals_map)
-            if loc.stack_addr < 0 or loc.stack_addr not in param_addrs:
+    # Always recover locals from debug — not a simplification, original symbol names
+    for loc in locs:
+        name = stack_name(fn, loc.stack_addr, locals_map)
+        if loc.stack_addr < 0 or (loc.stack_addr not in param_addrs and name.startswith("var_")):
+            res.locals_decl.append(f"new {name};")
+        elif loc.name and loc.name not in [p.name for p in locs if p.stack_addr in param_addrs]:
+            if loc.stack_addr >= 12 and loc.stack_addr not in param_addrs:
                 res.locals_decl.append(f"new {name};")
 
     for i, (rel, op, extra) in enumerate(insns):
@@ -464,16 +496,17 @@ def decompile_body(
             if n <= 0:
                 hint = NATIVE_ARG_HINTS.get(native, 0)
                 n = _resolve_arg_count(native, _args_before(insns, i, hint), len(stk))
-            call_args = stk[-n:] if n and len(stk) >= n else stk[:]
-            stk = stk[:-n] if n else []
+            call_args = _pick_call_args(stk, n, insns, i, NATIVE_ARG_HINTS.get(native, 0))
+            stk = stk[: -len(call_args)] if call_args else stk
             _emit_call(native, call_args, indent, res.lines)
             continue
         if op == "sysreq.c":
             native = extra
             hint = NATIVE_ARG_HINTS.get(native, 0)
-            n = _resolve_arg_count(native, _args_before(insns, i, hint), len(stk))
-            call_args = stk[-n:] if n and len(stk) >= n else stk[:]
-            stk = stk[:-n] if n else []
+            lookback = _args_before(insns, i, hint)
+            n = _resolve_arg_count(native, lookback, len(stk))
+            call_args = _pick_call_args(stk, n, insns, i, hint)
+            stk = stk[: -len(call_args)] if call_args else stk
             _emit_call(native, call_args, indent, res.lines)
             continue
         if op == "call":
@@ -496,26 +529,21 @@ def decompile_body(
             stk.clear()
             continue
         if op == "jzer":
-            if compile_mode:
-                nxt = insns[i + 1][1] if i + 1 < len(insns) else ""
-                if nxt in ("retn", "ret"):
-                    res.lines.append(f"{indent}return 0;")
-                continue
             nxt = insns[i + 1][1] if i + 1 < len(insns) else ""
+            tgt = addr_to_name.get(int(extra, 16), extra) if extra.startswith("0x") else extra
             if nxt in ("retn", "ret") or (i + 2 < len(insns) and insns[i + 2][1] in ("retn", "ret")):
-                res.lines.append(f"{indent}if (!_) return 0; // jzer -> {extra}")
+                res.lines.append(f"{indent}if (!_) return 0; // jzer @ {tgt}")
             else:
-                tgt = addr_to_name.get(int(extra, 16), extra) if extra.startswith("0x") else extra
-                res.lines.append(f"{indent}if (!_) {{}} // goto {tgt}")
+                res.lines.append(f"{indent}if (!_) goto lbl_{extra}; // jzer")
             continue
         if op in JUMP_OPS:
-            if compile_mode:
-                continue
             tgt = addr_to_name.get(int(extra, 16), extra) if extra.startswith("0x") else extra
             if op == "switch":
-                res.lines.append(f"{indent}// switch -> {tgt}")
+                res.lines.append(f"{indent}switch (_) // -> {tgt}")
+            elif op == "jnz":
+                res.lines.append(f"{indent}if (_) goto lbl_{extra}; // jnz")
             else:
-                res.lines.append(f"{indent}// goto {tgt}")
+                res.lines.append(f"{indent}goto lbl_{extra}; // {op} {tgt}")
             continue
         if op == "casetbl":
             res.lines.append(f"{indent}// casetbl {extra}")
@@ -611,19 +639,13 @@ def emit_function(
     kw = "public" if public else "stock"
     params = locals_map.get((fn.codestart, fn.codeend), [])
     sig = ", ".join(p.name for p in params if p.stack_addr >= 0) if params else ""
-    safe_name = re.sub(r"^@+", "", fn.name)
-    hdr = f"// line {src_line}" if src_line and not compile_mode else ""
-    out = []
-    if hdr:
-        out.append(hdr)
-    out.append(f"{kw} {safe_name}({sig})")
-    out.append("{")
-    if compile_mode and dec.locals_decl:
+    hdr = f"// line {src_line} | AMX 0x{fn.codestart:x}-0x{fn.codeend:x}" if src_line else f"// AMX 0x{fn.codestart:x}-0x{fn.codeend:x}"
+    out = [hdr, f"{kw} {fn.name}({sig})", "{"]
+    if dec.locals_decl:
         out.extend(f"    {d}" for d in sorted(set(dec.locals_decl)))
     out.extend(dec.lines)
-    if not dec.lines or compile_mode:
-        if not any("return" in ln for ln in dec.lines):
-            out.append("    return 1;")
+    if not any("return" in ln for ln in dec.lines):
+        out.append("    return 1;")
     out.extend(["}", ""])
     return out
 
@@ -660,10 +682,12 @@ def main() -> int:
     dbg = parse_debug(file_data, AMX_MAIN_SIZE)
     funcs, globals_, addr_to_name, locals_map = extract_symbols(file_data)
     for s in dbg["symbols"]:
-        if s["ident"] in ("v", "a") and s["codestart"] == 0 and s["codeend"] == 0:
-            n = s["name"]
-            if n and re.match(r"^[A-Za-z_]\w*$", n) and n not in globals_:
-                globals_[n] = GlobalSym(n, s["address"], s["dim"])
+        ident_ord = ord(s["ident"]) if len(s["ident"]) == 1 else -1
+        if ident_ord not in (1, 2, 3) or s["codestart"] != 0 or s["codeend"] != 0:
+            continue
+        n = s["name"]
+        if n and re.match(r"^[A-Za-z_@][\w@]*$", n) and n not in globals_:
+            globals_[n] = GlobalSym(n, s["address"], s["dim"])
     line_map = {a: l for a, l in dbg["lines"] if l > 0}
     file_map = sorted(dbg["files"], key=lambda x: x[0])
 
