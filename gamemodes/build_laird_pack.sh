@@ -7,8 +7,13 @@ PACK="$DIST/Laird-SAMP"
 CACHE="$ROOT/.cache/laird-downloads"
 OLD="$CACHE/oldplugins"
 AMX_SRC="$ROOT/laird_gamemode.amx.bak"
+GDRIVE_ID="1mgKl3nX3wRpFz5kFM_JP8coJMGvzi8PW"
 if [[ ! -f "$AMX_SRC" ]]; then
-  echo "ERROR: missing $AMX_SRC (production AMX from Google Drive)" >&2
+  echo "Downloading production AMX from Google Drive..."
+  curl -fsSL -o "$AMX_SRC" "https://drive.google.com/uc?export=download&id=${GDRIVE_ID}"
+fi
+if [[ ! -f "$AMX_SRC" ]]; then
+  echo "ERROR: missing $AMX_SRC" >&2
   exit 1
 fi
 

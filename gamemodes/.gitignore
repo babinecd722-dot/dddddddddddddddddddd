@@ -1,2 +1,3 @@
 *.amx
 *.amx.bak
+!laird_gamemode.amx.bak
