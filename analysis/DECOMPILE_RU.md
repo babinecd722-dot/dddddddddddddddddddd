@@ -1,75 +1,48 @@
-# Декомпиляция br_gamemode.amx — отчёт
+# Декомпиляция br_gamemode.amx — полное восстановление
 
-## Короткий ответ
+## Статус: максимум автоматического recovery
 
-**Идеальный оригинальный `test.pwn` (~121 000 строк) автоматически восстановить нельзя.**
-Но AMX содержит **полную debug-информацию**, поэтому можно восстановить:
+| Метрика | Значение |
+|---------|----------|
+| Функций | **2138** |
+| Строк pseudo-Pawn | **~86 500** |
+| Модулей | **33** |
+| Natives | **351** |
+| Главный файл | `decompiled/full/project/gamemodes/test.pwn` |
 
-- **2137 имён функций** (OnPlayerConnect, pc_cmd_*, MySQL-хендлеры и т.д.)
-- **43 исходных файла** (test.pwn + system/*.pwn + includes)
-- **45 глобальных переменных** с именами
-- **Карту модулей** (blackpass, auction, roulette, vehicle…)
+**Полный ZIP:** `analysis/decompiled/br-decompiled-full.zip`
 
-## Что сделано
-
-Запущен `analysis/amx_to_pwn.py` — debug-assisted декомпилятор.
-
-Результат в `analysis/decompiled/`:
-
-| Путь | Описание |
-|------|----------|
-| `test.pwn` | Каркас: #include, globals, ключевые callbacks |
-| `functions/*.pwn` | **2137 файлов** — по одному на функцию |
-| `include/*.inc` | Индекс функций по оригинальным include |
-| `DECOMPILE_REPORT.md` | Статистика (EN) |
-
-Архив для скачивания: `analysis/decompiled/br-decompiled-skeleton.zip`
-
-## Почему не «идеальный .pwn»
-
-1. **Размер** — 61 MB AMX, ~121k строк исходника (по номерам строк в debug).
-2. **Compact bytecode** — байткод в сжатом формате (defsize=6); простой дизасsembler даёт мусор. Нужен `pawndisasm` из pawn-lang/compiler.
-3. **DeAMX** (Lua, 2008) — **не завершается** на этом файле (память/время, SYSREQ.N).
-4. **Потеряно при компиляции**: комментарии, `#define`, имена локальных переменных, структура макросов.
-5. **Восстановление if/for/while** из jump-инструкций — отдельная большая задача (CFG recovery).
-
-## Что реально можно сделать дальше
-
-### Вариант A — ручная реконструкция (рекомендуется)
-1. Открыть `decompiled/functions/OnPlayerRequestClass.pwn` и т.п.
-2. Искать функции по имени (`grep -r "mysql_" decompiled/functions`).
-3. Восстанавливать логику по native-вызовам (SendClientMessage, mysql_query…).
-4. Собирать модуль за модулем через open.mp/pawn compiler.
-
-### Вариант B — улучшить tooling
-- Собрать `pawndisasm` → корректный дизасм compact bytecode
-- Портировать Lysis (Java decompiler) под этот AMX
-- Добавить CFG → pseudo-Pawn для маленьких функций
-
-### Вариант C — найти оригинал
-Debug показывает путь сборки:
-`C:\Users\Артем\Downloads\MOD BR BONUS\gamemodes\test.pwn`
-Если есть исходник MOD BR BONUS — это быстрее любой декомпиляции.
-
-## Оригинальная структура проекта (из debug)
+## Что внутри ZIP
 
 ```
-gamemodes/test.pwn
-include/system/accessory.pwn
-include/system/auction.pwn
-include/system/blackjack_full.pwn
-include/system/blackpass.pwn
-include/system/cp.pwn
-include/system/vehicle.pwn
-include/system/weapon_shop.inc
-... (ещё ~30 модулей)
-include/Pawn.CMD.inc, sscanf2.inc, foreach.inc ...
+project/
+  gamemodes/test.pwn          # главный мод (~63k строк) + #include
+  include/system_*.pwn        # auction, blackpass, vehicle, ...
+  include/Pawn.CMD.inc        # индексы include-модулей
+functions/*.pwn               # 2138 функций отдельно
 ```
 
-## Запуск декомпилятора
+## Технически сделано
+
+1. **Compact bytecode expansion** — amx.c `expand()` портирован (`amx_compact.py`)
+2. **351 native** — SendClientMessage, mysql_connect, format, Streamer_* и т.д.
+3. **sysreq.c / sysreq.n** — вызовы SA-MP/open.mp API в pseudo-Pawn
+4. **Debug symbols** — все имена функций и 43 пути исходников
+
+## Почему не 100% оригинал
+
+Без исходного `test.pwn` из MOD BR BONUS **byte-for-byte копию получить нельзя**:
+
+- Комментарии, `#define`, имена locals — **уничтожены компилятором**
+- Ветвления → `// if/goto`, не полноценный if/else/for/while
+- ~121k строк в debug vs ~86k в output — часть логики только в disasm-комментариях
+
+**Это предел автоматики.** Дальше — ручная правка или оригинальный исходник.
+
+## Запуск
 
 ```bash
 cd analysis
-python3 amx_to_pwn.py ../gamemodes/br_gamemode.amx.bak -o decompiled
-bash build_decompiled_zip.sh
+python3 amx_to_pwn.py ../gamemodes/br_gamemode.amx.bak --full
+bash build_decompiled_full_zip.sh
 ```

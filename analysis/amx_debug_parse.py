@@ -28,6 +28,7 @@ OPCODE_NAMES = [
 
 PARM1 = set(range(1, 9)) | {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 26, 28, 29, 30, 31, 32, 38, 39, 40, 41, 44, 45, 51, 52}
 JUMP = set(range(51, 64))
+SYSREQ_C = 121
 SYSREQ_N = 139
 SYM_STRUCT_SIZE = 19  # sizeof(AMX_DBG_SYMBOL) with name[1]
 
@@ -101,14 +102,35 @@ def parse_debug(data: bytes, dbg_off: int):
     }
 
 
-def get_natives(data):
-    nat_off = struct.unpack_from('<i', data, 36)[0]
-    lib_off = struct.unpack_from('<i', data, 40)[0]
-    natives = []
-    for i in range((lib_off - nat_off) // 4):
-        ptr, = struct.unpack_from('<I', data, nat_off + i * 4)
-        end = data.find(b'\x00', ptr)
-        natives.append(data[ptr:end].decode('latin-1', errors='replace'))
+def parse_header_full(data: bytes) -> dict:
+    size, magic, fv, av, flags, defsize = struct.unpack_from("<IHbbhh", data, 0)
+    if magic != 0xF1E0:
+        raise ValueError(f"bad magic 0x{magic:04x}")
+    fields = struct.unpack_from("<11i", data, 12)
+    names = ["cod", "dat", "hea", "stp", "cip", "publics", "natives", "libraries", "pubvars", "tags", "nametable"]
+    hdr = dict(zip(names, fields))
+    hdr.update({"size": size, "flags": flags, "defsize": defsize, "compact": bool(flags & 0x04)})
+    return hdr
+
+
+def get_natives(data: bytes) -> list[str]:
+    hdr = parse_header_full(data)
+    nat_off = hdr["natives"]
+    lib_off = hdr["libraries"]
+    defsize = hdr["defsize"]
+    natives: list[str] = []
+    if defsize == 8:
+        count = (lib_off - nat_off) // defsize
+        for i in range(count):
+            base = nat_off + i * defsize
+            name_ptr = struct.unpack_from("<I", data, base + 4)[0]
+            end = data.find(b"\x00", name_ptr)
+            natives.append(data[name_ptr:end].decode("latin-1", errors="replace"))
+    else:
+        for i in range((lib_off - nat_off) // 4):
+            ptr, = struct.unpack_from("<I", data, nat_off + i * 4)
+            end = data.find(b"\x00", ptr)
+            natives.append(data[ptr:end].decode("latin-1", errors="replace"))
     return natives
 
 
