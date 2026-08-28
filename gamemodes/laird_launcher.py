@@ -9,13 +9,6 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-MYSQL_OFFSETS = {
-    "host": 53_890_975,
-    "user": 53_890_985,
-    "password": 53_890_996,
-    "database": 53_891_007,
-    "charset": 53_891_097,
-}
 MYSQL_LIMITS = {
     "host": 9,
     "user": 10,
@@ -64,16 +57,6 @@ def decode_obfuscated(raw: bytes) -> str:
     return "".join(out)
 
 
-def read_field(raw: bytes) -> str:
-    end = raw.find(b"\x00")
-    if end == -1:
-        end = len(raw)
-    data = raw[:end]
-    if b"\x80" in data:
-        return decode_obfuscated(data)
-    return data.decode("ascii", errors="replace")
-
-
 @dataclass(frozen=True)
 class ReplaceRule:
     config_key: str
@@ -82,19 +65,62 @@ class ReplaceRule:
     section: str = "project"
 
 
-REPLACE_RULES: tuple[ReplaceRule, ...] = (
-    ReplaceRule("name", "RAME RUSSIA", "obf", "project"),
-    ReplaceRule("name_alt", "BLACK RUSSIA", "obf", "project"),
-    ReplaceRule("name_title", "Black Russia", "obf", "project"),
-    ReplaceRule("bonus_tag", "BRBONUS", "obf", "project"),
-    ReplaceRule("bonus_label", "BR BONUS", "plain", "project"),
-    ReplaceRule("bonus_label", "BR BONUS", "obf", "project"),
-    ReplaceRule("telegram", "t.me/brbonustest", "obf", "links"),
-    ReplaceRule("telegram_mobile", "t.me/prizmamobile", "obf", "links"),
-    ReplaceRule("forum", "forum.samp-tape.ru", "obf", "links"),
-    ReplaceRule("site", "SAMP-TAPE.RU", "obf", "links"),
-    ReplaceRule("vk", "vk.com/samp_mobi", "obf", "links"),
+@dataclass(frozen=True)
+class AmxProfile:
+    name: str
+    mysql_offsets: dict[str, int]
+    replace_rules: tuple[ReplaceRule, ...]
+
+
+# MOD BR BONUS / decompiled test.amx (~63 MB, debug AMX)
+PROFILE_BR_BONUS = AmxProfile(
+    name="br_bonus",
+    mysql_offsets={
+        "host": 53_890_975,
+        "user": 53_890_985,
+        "password": 53_890_996,
+        "database": 53_891_007,
+        "charset": 53_891_097,
+    },
+    replace_rules=(
+        ReplaceRule("name", "RAME RUSSIA", "obf", "project"),
+        ReplaceRule("name_alt", "BLACK RUSSIA", "obf", "project"),
+        ReplaceRule("name_title", "Black Russia", "obf", "project"),
+        ReplaceRule("bonus_tag", "BRBONUS", "obf", "project"),
+        ReplaceRule("bonus_label", "BR BONUS", "plain", "project"),
+        ReplaceRule("bonus_label", "BR BONUS", "obf", "project"),
+        ReplaceRule("telegram", "t.me/brbonustest", "obf", "links"),
+        ReplaceRule("telegram_mobile", "t.me/prizmamobile", "obf", "links"),
+        ReplaceRule("forum", "forum.samp-tape.ru", "obf", "links"),
+        ReplaceRule("site", "SAMP-TAPE.RU", "obf", "links"),
+        ReplaceRule("vk", "vk.com/samp_mobi", "obf", "links"),
+    ),
 )
+
+# Production build from Google Drive (~18 MB, release AMX, Native Build 12/07/2026)
+PROFILE_LAIRD = AmxProfile(
+    name="laird",
+    mysql_offsets={
+        "host": 18_191_471,
+        "user": 18_191_485,
+        "password": 18_191_527,
+        "database": 18_191_500,
+    },
+    replace_rules=(
+        ReplaceRule("name", "RAME RUSSIA", "obf", "project"),
+        ReplaceRule("name_alt", "BLACK RUSSIA", "obf", "project"),
+        ReplaceRule("telegram", "t.me/l4ird", "obf", "links"),
+        ReplaceRule("forum", "forum.samp-tape.ru", "obf", "links"),
+        ReplaceRule("site", "SAMP-TAPE.RU", "obf", "links"),
+        ReplaceRule("vk", "vk.com/samp_mobi", "obf", "links"),
+    ),
+)
+
+
+def detect_profile(buf: bytes) -> AmxProfile:
+    if len(buf) < 30_000_000:
+        return PROFILE_LAIRD
+    return PROFILE_BR_BONUS
 
 
 def patch_fixed_string(buf: bytearray, offset: int, encoded: bytes, limit: int, label: str) -> None:
@@ -137,20 +163,51 @@ def load_config(path: Path) -> configparser.ConfigParser:
     return cp
 
 
-def apply_mysql(buf: bytearray, cp: configparser.ConfigParser) -> None:
+def apply_mysql(buf: bytearray, cp: configparser.ConfigParser, profile: AmxProfile) -> None:
     sec = cp["mysql"]
-    patch_fixed_string(buf, MYSQL_OFFSETS["host"], encode_plain(sec["host"].strip()), MYSQL_LIMITS["host"], "mysql.host")
-    patch_fixed_string(buf, MYSQL_OFFSETS["user"], encode_obfuscated(sec["user"].strip()), MYSQL_LIMITS["user"], "mysql.user")
-    patch_fixed_string(buf, MYSQL_OFFSETS["password"], encode_obfuscated(sec["password"].strip()), MYSQL_LIMITS["password"], "mysql.password")
-    patch_fixed_string(buf, MYSQL_OFFSETS["database"], encode_obfuscated(sec["database"].strip()), MYSQL_LIMITS["database"], "mysql.database")
+    patch_fixed_string(
+        buf,
+        profile.mysql_offsets["host"],
+        encode_plain(sec["host"].strip()),
+        MYSQL_LIMITS["host"],
+        "mysql.host",
+    )
+    patch_fixed_string(
+        buf,
+        profile.mysql_offsets["user"],
+        encode_obfuscated(sec["user"].strip()),
+        MYSQL_LIMITS["user"],
+        "mysql.user",
+    )
+    patch_fixed_string(
+        buf,
+        profile.mysql_offsets["password"],
+        encode_obfuscated(sec["password"].strip()),
+        MYSQL_LIMITS["password"],
+        "mysql.password",
+    )
+    patch_fixed_string(
+        buf,
+        profile.mysql_offsets["database"],
+        encode_obfuscated(sec["database"].strip()),
+        MYSQL_LIMITS["database"],
+        "mysql.database",
+    )
+    charset_off = profile.mysql_offsets.get("charset")
     charset = sec.get("charset", "cp1251").strip()
-    if charset:
-        patch_fixed_string(buf, MYSQL_OFFSETS["charset"], encode_obfuscated(charset), MYSQL_LIMITS["charset"], "mysql.charset")
+    if charset_off is not None and charset:
+        patch_fixed_string(
+            buf,
+            charset_off,
+            encode_obfuscated(charset),
+            MYSQL_LIMITS["charset"],
+            "mysql.charset",
+        )
 
 
-def apply_branding(buf: bytearray, cp: configparser.ConfigParser) -> int:
+def apply_branding(buf: bytearray, cp: configparser.ConfigParser, profile: AmxProfile) -> int:
     total = 0
-    for rule in REPLACE_RULES:
+    for rule in profile.replace_rules:
         value = cp[rule.section].get(rule.config_key, "").strip()
         if not value:
             continue
@@ -188,13 +245,15 @@ def build_laird(root: Path, ini: Path, start: bool) -> int:
     out_gm = root / "gamemodes" / "Laird.amx"
     cp = load_config(ini)
     buf = bytearray(source.read_bytes())
-    apply_mysql(buf, cp)
-    apply_branding(buf, cp)
+    profile = detect_profile(buf)
+    apply_mysql(buf, cp, profile)
+    branding = apply_branding(buf, cp, profile)
     out_main.write_bytes(buf)
     verify_amx(out_main)
     out_gm.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(out_main, out_gm)
-    print(f"OK: {out_main.name} ({len(buf)} bytes)")
+    print(f"OK: profile={profile.name} source={source.name}")
+    print(f"OK: {out_main.name} ({len(buf)} bytes, branding={branding})")
     print(f"OK: gamemodes/{out_gm.name}")
     if not start:
         return 0
@@ -205,6 +264,7 @@ def build_laird(root: Path, ini: Path, start: bool) -> int:
     if not (srv.stat().st_mode & 0o111):
         srv.chmod(srv.stat().st_mode | 0o111)
     import os
+
     os.chdir(root)
     os.execv(str(srv), [str(srv)])
     return 0

@@ -6,7 +6,11 @@ DIST="$ROOT/dist"
 PACK="$DIST/Laird-SAMP"
 CACHE="$ROOT/.cache/laird-downloads"
 OLD="$CACHE/oldplugins"
-AMX_SRC="$ROOT/br_gamemode.amx.bak"
+AMX_SRC="$ROOT/laird_gamemode.amx.bak"
+if [[ ! -f "$AMX_SRC" ]]; then
+  echo "ERROR: missing $AMX_SRC (production AMX from Google Drive)" >&2
+  exit 1
+fi
 
 install_plugin() {
   local src="$1" name="$2"
@@ -175,7 +179,7 @@ LAIRD — SA-MP 0.3.7 серверный пакет
 СТРУКТУРА:
   Laird.py              — один скрипт (патч + запуск)
   Laird.amx             — создаётся при запуске Laird.py (рядом со скриптом)
-  Sources/gamemode.amx  — исходный AMX (только он)
+  Sources/gamemode.amx  — production AMX (~18 MB, Native Build 12/07/2026)
   server_config.ini     — MySQL / брендинг / ссылки
   server.cfg            — конфиг SA-MP 0.3.7
   samp03svr             — сервер Linux 32-bit
