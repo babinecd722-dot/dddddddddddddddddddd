@@ -1,43 +1,56 @@
 # Декомпиляция br_gamemode.amx — полное восстановление
 
-## Статус: максимум автоматического recovery
+## Статус: v3 — исправлен disasm + нативы
 
-| Метрика | Значение |
-|---------|----------|
-| Функций | **2138** |
-| Строк pseudo-Pawn | **~86 500** |
-| Модулей | **33** |
-| Natives | **351** |
-| Главный файл | `decompiled/full/project/gamemodes/test.pwn` |
+| Метрика | Было (v2) | Сейчас (v3) |
+|---------|-----------|-------------|
+| Функций | 2138 | **2138** |
+| Строк pseudo-Pawn | ~86 500 | **~174 000** (test.pwn) |
+| SendClientMessage | 0 | **3939** |
+| mysql_query | 0 | **1043** |
+| format / printf | частично | **3142 / 612** |
+| Модулей | 33 | **33** |
+| ZIP | 284 KB | **612 KB** |
 
 **Полный ZIP:** `analysis/decompiled/br-decompiled-full.zip`
+
+## Критический фикс v3
+
+Старая таблица opcodes была **неверной** (дубли sc7 старого формата). Из-за этого disasm «съезжал» после ~100 инструкций:
+- `sysreq.c` читался как `bounds` / мусор
+- `SendClientMessage`, `mysql_*` **не попадали** в output
+
+**Исправление:** таблица из `pawndisasm.c` (`amx_opcodes.py`) — 158 opcodes, push2–push5, casetbl, правильные `sysreq.c` (123) / `sysreq.n` (135).
 
 ## Что внутри ZIP
 
 ```
 project/
-  gamemodes/test.pwn          # главный мод (~63k строк) + #include
+  gamemodes/test.pwn          # главный мод + #include всех модулей
   include/system_*.pwn        # auction, blackpass, vehicle, ...
-  include/Pawn.CMD.inc        # индексы include-модулей
+  include/_decompiled_globals.inc
 functions/*.pwn               # 2138 функций отдельно
 ```
 
 ## Технически сделано
 
-1. **Compact bytecode expansion** — amx.c `expand()` портирован (`amx_compact.py`)
-2. **351 native** — SendClientMessage, mysql_connect, format, Streamer_* и т.д.
-3. **sysreq.c / sysreq.n** — вызовы SA-MP/open.mp API в pseudo-Pawn
-4. **Debug symbols** — все имена функций и 43 пути исходников
+1. **Compact bytecode expansion** — `amx_compact.py`
+2. **Корректный disasm** — `amx_opcodes.py` (pawndisasm)
+3. **351 native** — имена из AMX header
+4. **sysreq.c арность** — lookback push + hints (SendClientMessage=3, mysql_connect=8)
+5. **Debug symbols** — параметры функций, line markers `// --- line N ---`
+6. **2138 функций** → 33 исходных модуля по debug paths
 
 ## Почему не 100% оригинал
 
-Без исходного `test.pwn` из MOD BR BONUS **byte-for-byte копию получить нельзя**:
+Без `C:\Users\...\MOD BR BONUS\gamemodes\test.pwn`:
 
-- Комментарии, `#define`, имена locals — **уничтожены компилятором**
-- Ветвления → `// if/goto`, не полноценный if/else/for/while
-- ~121k строк в debug vs ~86k в output — часть логики только в disasm-комментариях
+- Комментарии, `#define`, enum — потеряны
+- if/else/for — частично `// goto` / `if (!_)`
+- Строки в data могут быть obfuscated (`\x80_`) — адреса есть, текст не всегда читается
+- Некоторые вызовы с лишним `push.c` (арность ±1)
 
-**Это предел автоматики.** Дальше — ручная правка или оригинальный исходник.
+**Это предел автоматики** для 61 MB AMX. DeAMX/pawndisasm на полном файле — timeout/64-bit issues.
 
 ## Запуск
 
