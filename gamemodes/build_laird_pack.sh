@@ -8,6 +8,9 @@ CACHE="$ROOT/.cache/laird-downloads"
 OLD="$CACHE/oldplugins"
 AMX_SRC="$ROOT/laird_gamemode.amx.bak"
 GDRIVE_ID="1mgKl3nX3wRpFz5kFM_JP8coJMGvzi8PW"
+DB_GDRIVE_ID="19WHbo_mYKIwsN3OmP9pBD0zp1C1AVP-_"
+DB_RAW="$ROOT/.cache/gdrive/db_dump.sql"
+DB_CLEAN="$DIST/ramegames2026_clean.sql"
 if [[ ! -f "$AMX_SRC" ]]; then
   echo "Downloading production AMX from Google Drive..."
   curl -fsSL -o "$AMX_SRC" "https://drive.google.com/uc?export=download&id=${GDRIVE_ID}"
@@ -16,6 +19,14 @@ if [[ ! -f "$AMX_SRC" ]]; then
   echo "ERROR: missing $AMX_SRC" >&2
   exit 1
 fi
+
+echo "=== step 0/8 Clean MySQL dump ==="
+mkdir -p "$ROOT/.cache/gdrive"
+if [[ ! -f "$DB_RAW" ]]; then
+  echo "Downloading DB dump from Google Drive..."
+  curl -fsSL -o "$DB_RAW" "https://drive.google.com/uc?export=download&id=${DB_GDRIVE_ID}"
+fi
+python3 "$ROOT/clean_database.py" "$DB_RAW" -o "$DB_CLEAN" --db ramegames2026
 
 install_plugin() {
   local src="$1" name="$2"
@@ -76,8 +87,9 @@ ensure_old_plugins() {
 echo "=== step 1/8 Verify AMX ==="
 python3 "$ROOT/verify_amx.py" "$AMX_SRC"
 rm -rf "$PACK"
-mkdir -p "$CACHE" "$OLD" "$PACK/Sources" "$PACK/gamemodes" "$PACK/plugins" "$PACK/scriptfiles" "$PACK/logs"
+mkdir -p "$CACHE" "$OLD" "$PACK/Sources" "$PACK/gamemodes" "$PACK/plugins" "$PACK/scriptfiles" "$PACK/logs" "$PACK/database"
 cp "$AMX_SRC" "$PACK/Sources/gamemode.amx"
+cp "$DB_CLEAN" "$PACK/database/ramegames2026_clean.sql"
 
 echo "=== step 2/8 server_config.ini ==="
 python3 <<PY
@@ -189,10 +201,14 @@ LAIRD — SA-MP 0.3.7 серверный пакет
   server.cfg            — конфиг SA-MP 0.3.7
   samp03svr             — сервер Linux 32-bit
   plugins/              — json mysql sscanf streamer pawncmd pawnraknet sampvoice
+  database/             — ramegames2026_clean.sql (схема + карта, без игроков/логов)
 
 ЗАПУСК:
   1. sudo apt install python3 lib32stdc++6 lib32gcc-s1 lib32z1 mariadb-server
-  2. Создай БД и пользователя из server_config.ini, импортируй дамп таблиц мода
+  2. MySQL — пользователь и чистая БД:
+       sudo mysql -e "CREATE USER IF NOT EXISTS 'gs345455'@'localhost' IDENTIFIED BY 'gs345455'; GRANT ALL ON ramegames2026.* TO 'gs345455'@'localhost'; FLUSH PRIVILEGES;"
+       sudo mysql < database/ramegames2026_clean.sql
+     (имя БД/логин/пароль — в server_config.ini)
   3. python3 Laird.py
      → Laird.amx появится рядом со скриптом
      → копия в gamemodes/Laird.amx
@@ -215,8 +231,9 @@ SampVoice:
   Клиентам нужен sv_client из релиза CyberMor/sampvoice v3.0-alpha.
 
 MySQL:
-  Без дампа БД оригинального сервера gamemode может не инициализироваться.
-  Настрой [mysql] в server_config.ini перед запуском.
+  В комплекте database/ramegames2026_clean.sql — очищенный дамп «как новый сервер»:
+  89 таблиц, карта (дома/бизнесы/АЗС/ворота), без аккаунтов, логов и инвентаря.
+  Настрой [mysql] в server_config.ini при другом хосте/пароле.
 EOF
 
 rm -f "$DIST/Laird-SAMP.zip"
