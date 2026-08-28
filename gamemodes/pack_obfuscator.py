@@ -90,11 +90,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", type=Path, default=Path(__file__).with_name("apply_server_config.py"))
     ap.add_argument("--out-py", type=Path, required=True)
-    ap.add_argument("--out-sh", type=Path, required=True)
+    ap.add_argument("--out-sh", type=Path, default=None)
     args = ap.parse_args()
     blob, key = build_payload(args.source)
     emit_launcher(blob, key, args.out_py)
-    emit_shell_launcher(args.out_py.name, args.out_sh)
+    if args.out_sh:
+        emit_shell_launcher(args.out_py.name, args.out_sh)
     return 0
 
 
