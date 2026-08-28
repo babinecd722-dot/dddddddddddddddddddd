@@ -109,10 +109,13 @@ That path is **native/Java**, not this server gamemode AMX.
 
 | Approach | Result |
 |----------|--------|
-| Full `.pwn` recovery | **Not feasible** — names/structure lost at compile |
-| `pawndisasm` full output | **15,000,650 lines** → `analysis/amx_output/full_disasm.txt` |
-| Debug symbols | **2,141 functions** → `analysis/amx_output/functions_index.txt` |
-| Key function disasm | `analysis/amx_output/disassembly_key_funcs.txt` |
+| Full `.pwn` recovery | **Not feasible automatically** — ~121k lines, compact/special bytecode |
+| DeAMX (Lua) | **Hangs / OOM** on 61 MB AMX |
+| `amx_to_pwn.py` (debug-assisted) | **2137 functions**, skeleton `test.pwn`, per-function files |
+| `pawndisasm` full output | Requires 32-bit build; prior run → 15M lines disasm |
+| Debug symbols | **2141 functions**, 43 source files, 59k line entries |
+
+See `analysis/DECOMPILE_RU.md` and `analysis/decompiled/br-decompiled-skeleton.zip`.
 
 ---
 
