@@ -34,6 +34,22 @@ DEFAULT_OUT = ROOT / "restored" / "MOD BR BONUS"
 CACHE = ROOT / "cache" / "expanded.bin"
 
 
+SKIP_DECOMPILE_PATHS = {
+    "sscanf2.inc", "foreach.inc", "Pawn.CMD.inc", "Pawn.RakNet.inc", "float.inc",
+    "fdialog.inc", "fly.inc", "mxdate.inc", "brnotification.inc", "customhud.inc",
+    "customtune.inc", "lib/m_dialog.inc", "lib/m_crzones.inc",
+}
+
+
+def should_decompile_path(rel: str) -> bool:
+    base = rel.replace("\\", "/").split("/")[-1]
+    if base in SKIP_DECOMPILE_PATHS:
+        return False
+    if "pawno/include/" in rel and rel.endswith(".inc") and "system/" not in rel:
+        return False
+    return True
+
+
 def normalize_source_path(raw: str) -> str | None:
     """Map debug path -> relative path inside MOD BR BONUS."""
     p = raw.replace("\\", "/")
@@ -155,6 +171,8 @@ def build(amx: Path, out_root: Path, cache: Path) -> None:
         rel = normalize_source_path(raw_path)
         if rel is None:
             rel = f"gamemodes/_misc/{re.sub(r'[^\\w@.-]', '_', fn.name)[:80]}.pwn"
+        elif not should_decompile_path(rel):
+            rel = "gamemodes/test.pwn"
 
         dec = decompile_body(
             expanded, fn, file_data, hdr["cod"], natives, addr_to_name, locals_map, funcs, line_map, 120_000
@@ -193,6 +211,17 @@ def build(amx: Path, out_root: Path, cache: Path) -> None:
     module_paths.append(str(gpath.relative_to(out_root)))
 
     write_main_test_pwn(out_root, module_paths)
+
+    stdlib = Path("/workspace/tools/omp-stdlib")
+    if stdlib.is_dir():
+        for inc in stdlib.glob("*.inc"):
+            dest = out_root / "pawno" / "include" / inc.name
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(inc, dest)
+        open_mp = stdlib / "open.mp.inc"
+        if open_mp.is_file():
+            shutil.copy2(open_mp, out_root / "pawno" / "include" / "open.mp.inc")
+        print("Copied open.mp stdlib includes")
 
     # README
     readme = out_root.parent / "README_RESTORED_RU.md"
