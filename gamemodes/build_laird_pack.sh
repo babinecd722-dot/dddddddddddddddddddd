@@ -10,23 +10,24 @@ AMX_SRC="$ROOT/laird_gamemode.amx.bak"
 GDRIVE_ID="1mgKl3nX3wRpFz5kFM_JP8coJMGvzi8PW"
 DB_GDRIVE_ID="19WHbo_mYKIwsN3OmP9pBD0zp1C1AVP-_"
 DB_RAW="$ROOT/.cache/gdrive/db_dump.sql"
-DB_CLEAN="$DIST/ramegames2026_clean.sql"
+DB_CLEAN="$DIST/server_clean.sql"
+
 if [[ ! -f "$AMX_SRC" ]]; then
   echo "Downloading production AMX from Google Drive..."
   curl -fsSL -o "$AMX_SRC" "https://drive.google.com/uc?export=download&id=${GDRIVE_ID}"
 fi
-if [[ ! -f "$AMX_SRC" ]]; then
-  echo "ERROR: missing $AMX_SRC" >&2
-  exit 1
-fi
+[[ -f "$AMX_SRC" ]] || { echo "ERROR: missing $AMX_SRC" >&2; exit 1; }
 
-echo "=== step 0/8 Clean MySQL dump ==="
+echo "=== step 0/9 Sanitize AMX ==="
+python3 "$ROOT/laird_launcher.py" --sanitize-bak "$AMX_SRC"
+
+echo "=== step 1/9 Clean MySQL dump ==="
 mkdir -p "$ROOT/.cache/gdrive"
 if [[ ! -f "$DB_RAW" ]]; then
   echo "Downloading DB dump from Google Drive..."
   curl -fsSL -o "$DB_RAW" "https://drive.google.com/uc?export=download&id=${DB_GDRIVE_ID}"
 fi
-python3 "$ROOT/clean_database.py" "$DB_RAW" -o "$DB_CLEAN" --db ramegames2026
+python3 "$ROOT/clean_database.py" "$DB_RAW" -o "$DB_CLEAN" --db sampworld2026
 
 install_plugin() {
   local src="$1" name="$2"
@@ -50,14 +51,12 @@ fetch_asset() {
 
 ensure_old_plugins() {
   mkdir -p "$OLD"
-  # Pawn.CMD 3.3.3 — совпадает с include 0.1.77 в AMX (без mismatch)
   if [[ ! -f "$OLD/pc_3.3.3/pawncmd.so" ]]; then
     mkdir -p "$OLD/pc_3.3.3"
     curl -fsSL -o "$OLD/pc333.tgz" \
       "https://github.com/katursis/Pawn.CMD/releases/download/3.3.3/pawncmd-3.3.3-linux.tar.gz"
     tar -xzf "$OLD/pc333.tgz" -C "$OLD/pc_3.3.3"
   fi
-  # Pawn.RakNet 1.4.1 (urShadow) + sampvoice 3.0-alpha — без segfault вместе
   if [[ ! -f "$OLD/pr141/pawnraknet.so" ]]; then
     mkdir -p "$OLD/pr141"
     curl -fsSL -o "$OLD/pr141.tgz" \
@@ -84,14 +83,14 @@ ensure_old_plugins() {
   fi
 }
 
-echo "=== step 1/8 Verify AMX ==="
+echo "=== step 2/9 Verify AMX ==="
 python3 "$ROOT/verify_amx.py" "$AMX_SRC"
 rm -rf "$PACK"
 mkdir -p "$CACHE" "$OLD" "$PACK/Sources" "$PACK/gamemodes" "$PACK/plugins" "$PACK/scriptfiles" "$PACK/logs" "$PACK/database"
 cp "$AMX_SRC" "$PACK/Sources/gamemode.amx"
-cp "$DB_CLEAN" "$PACK/database/ramegames2026_clean.sql"
+cp "$DB_CLEAN" "$PACK/database/server_clean.sql"
 
-echo "=== step 2/8 server_config.ini ==="
+echo "=== step 3/9 server_config.ini ==="
 python3 <<PY
 import sys
 sys.path.insert(0, "$ROOT")
@@ -103,7 +102,7 @@ Path("$PACK/server_config.ini").write_text(
 )
 PY
 
-echo "=== step 3/8 SA-MP 0.3.7 R2-2-1 ==="
+echo "=== step 4/9 SA-MP 0.3.7 R2-2-1 ==="
 SAMP_TGZ="$CACHE/samp037svr_R2-2-1.tar.gz"
 [[ -f "$SAMP_TGZ" ]] || curl -fsSL -o "$SAMP_TGZ" \
   "https://raw.githubusercontent.com/Se8870/SAMP-File-Archive/master/archives/samp037svr_R2-2-1.tar.gz"
@@ -113,7 +112,7 @@ cp "$(find "$CACHE/samp03" -name samp03svr | head -1)" "$PACK/samp03svr"
 cp "$(find "$CACHE/samp03" -name announce | head -1)" "$PACK/announce" 2>/dev/null || true
 chmod +x "$PACK/samp03svr" "$PACK/announce" 2>/dev/null || true
 
-echo "=== step 4/8 Plugins (Linux: plugins/name без .so; log-core.so для mysql) ==="
+echo "=== step 5/9 Plugins ==="
 ensure_old_plugins
 
 MX="$(fetch_asset mysql "https://github.com/pBlueG/SA-MP-MySQL/releases/download/R41-4/mysql-R41-4-Debian-static.tar.gz")"
@@ -137,14 +136,14 @@ for p in mysql log-core sscanf streamer json pawncmd pawnraknet sampvoice; do
 done
 [[ -f "$PACK/plugins/log-core.so" ]] || { echo "FAIL: missing log-core.so"; exit 1; }
 
-echo "=== step 5/8 server.cfg ==="
+echo "=== step 6/9 server.cfg ==="
 cat > "$PACK/server.cfg" <<'EOF'
 echo Executing Server Config...
 lanmode 0
-rcon_password laird_change_me
+rcon_password change_me_123
 maxplayers 50
 port 7777
-hostname Laird Black Russia
+hostname SA-MP Server
 gamemode0 Laird 1
 filterscripts
 announce 0
@@ -161,16 +160,16 @@ language Russian
 plugins json mysql sscanf streamer pawncmd pawnraknet sampvoice
 EOF
 
-echo "=== step 6/8 Obfuscated Laird.py ==="
+echo "=== step 7/9 Obfuscated Laird.py ==="
 python3 "$ROOT/pack_obfuscator.py" --source "$ROOT/laird_launcher.py" --out-py "$PACK/Laird.py"
 
-echo "=== step 7/8 Test Laird.py ==="
+echo "=== step 8/9 Test Laird.py ==="
 cd "$PACK"
 python3 Laird.py --no-start
 [[ -f Laird.amx && -f gamemodes/Laird.amx ]] || exit 1
 python3 "$ROOT/verify_amx.py" Laird.amx
 
-echo "=== step 8/8 Smoke test (7 plugins, no segfault) ==="
+echo "=== step 9/9 Smoke test ==="
 rm -f Laird.amx gamemodes/Laird.amx server_log.txt svlog.txt
 python3 Laird.py --no-start
 set +e
@@ -191,49 +190,34 @@ fi
 rm -f server_log.txt svlog.txt Laird.amx gamemodes/Laird.amx
 
 cat > "$PACK/INSTALL_RU.txt" <<'EOF'
-LAIRD — SA-MP 0.3.7 серверный пакет
+SA-MP 0.3.7 серверный пакет
 
 СТРУКТУРА:
-  Laird.py              — один скрипт (патч + запуск)
-  Laird.amx             — создаётся при запуске Laird.py (рядом со скриптом)
-  Sources/gamemode.amx  — production AMX (~18 MB, Native Build 12/07/2026)
-  server_config.ini     — MySQL / брендинг / ссылки
-  server.cfg            — конфиг SA-MP 0.3.7
-  samp03svr             — сервер Linux 32-bit
-  plugins/              — json mysql sscanf streamer pawncmd pawnraknet sampvoice
-  database/             — ramegames2026_clean.sql (схема + карта, без игроков/логов)
+  Laird.py
+  Laird.amx
+  Sources/gamemode.amx
+  server_config.ini
+  server.cfg
+  samp03svr
+  plugins/
+  database/server_clean.sql
 
 ЗАПУСК:
   1. sudo apt install python3 lib32stdc++6 lib32gcc-s1 lib32z1 mariadb-server
-  2. MySQL — пользователь и чистая БД:
-       sudo mysql -e "CREATE USER IF NOT EXISTS 'gs345455'@'localhost' IDENTIFIED BY 'gs345455'; GRANT ALL ON ramegames2026.* TO 'gs345455'@'localhost'; FLUSH PRIVILEGES;"
-       sudo mysql < database/ramegames2026_clean.sql
-     (имя БД/логин/пароль — в server_config.ini)
+  2. sudo mysql -e "CREATE USER IF NOT EXISTS 'gm202601'@'localhost' IDENTIFIED BY 'sp202602'; GRANT ALL ON sampworld2026.* TO 'gm202601'@'localhost'; FLUSH PRIVILEGES;"
+     sudo mysql < database/server_clean.sql
   3. python3 Laird.py
-     → Laird.amx появится рядом со скриптом
-     → копия в gamemodes/Laird.amx
-     → запуск samp03svr
 
 ТОЛЬКО СБОРКА AMX:
   python3 Laird.py --no-start
 
-ПЛАГИНЫ (проверенные версии):
+ПЛАГИНЫ:
   json 1.4.1 | mysql R41-4 + log-core | sscanf 2.8.3 | streamer 2.9.4
   pawncmd 3.3.3 | pawnraknet 1.4.1 | sampvoice 3.0-alpha
 
-ВАЖНО (Linux):
-  Файлы в plugins/ без расширения .so (mysql, sscanf, …).
-  Дополнительно нужен plugins/log-core.so — mysql ищет его по имени.
+Linux: plugins без .so, кроме log-core.so
 
-SampVoice:
-  На сервере — sampvoice 3.0-alpha (совместим с pawnraknet).
-  sampvoice 3.1 + pawnraknet на Linux дают segfault.
-  Клиентам нужен sv_client из релиза CyberMor/sampvoice v3.0-alpha.
-
-MySQL:
-  В комплекте database/ramegames2026_clean.sql — очищенный дамп «как новый сервер»:
-  89 таблиц, карта (дома/бизнесы/АЗС/ворота), без аккаунтов, логов и инвентаря.
-  Настрой [mysql] в server_config.ini при другом хосте/пароле.
+MySQL: database/server_clean.sql — только схема (89 таблиц), без данных игроков
 EOF
 
 rm -f "$DIST/Laird-SAMP.zip"

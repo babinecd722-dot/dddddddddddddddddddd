@@ -17,6 +17,45 @@ MYSQL_LIMITS = {
     "charset": 20,
 }
 
+NEUTRAL = {
+    "project": {
+        "name": "SAMP SERVER",
+        "name_alt": "BLACK SERVER",
+        "name_title": "Black Server",
+        "bonus_tag": "NOBONUS",
+        "bonus_label": "NO BONUS",
+    },
+    "links": {
+        "telegram": "t.me/link0",
+        "telegram_mobile": "t.me/mobile01",
+        "forum": "forum.example.net/",
+        "site": "MY-SERVER.RU",
+        "vk": "vk.com/myserver01",
+    },
+    "mysql": {
+        "host": "127.0.0.1",
+        "user": "gm202601",
+        "password": "sp202602",
+        "database": "sampworld2026",
+        "charset": "cp1251",
+    },
+}
+
+LEGACY_STRINGS = (
+    ("RAME RUSSIA", NEUTRAL["project"]["name"], "obf"),
+    ("BLACK RUSSIA", NEUTRAL["project"]["name_alt"], "obf"),
+    ("Black Russia", NEUTRAL["project"]["name_title"], "obf"),
+    ("BRBONUS", NEUTRAL["project"]["bonus_tag"], "obf"),
+    ("BR BONUS", NEUTRAL["project"]["bonus_label"], "plain"),
+    ("BR BONUS", NEUTRAL["project"]["bonus_label"], "obf"),
+    ("t.me/l4ird", NEUTRAL["links"]["telegram"], "obf"),
+    ("t.me/brbonustest", NEUTRAL["links"]["telegram"], "obf"),
+    ("t.me/prizmamobile", NEUTRAL["links"]["telegram_mobile"], "obf"),
+    ("forum.samp-tape.ru", NEUTRAL["links"]["forum"], "obf"),
+    ("SAMP-TAPE.RU", NEUTRAL["links"]["site"], "obf"),
+    ("ramegames2026", NEUTRAL["mysql"]["database"], "obf"),
+)
+
 
 def encode_obfuscated(value: str) -> bytes:
     out = bytearray()
@@ -40,21 +79,33 @@ def encode_plain(value: str) -> bytes:
     return value.encode("ascii")
 
 
-def decode_obfuscated(raw: bytes) -> str:
-    out: list[str] = []
-    i = 0
-    while i < len(raw):
-        if raw[i] == 0x80 and i + 1 < len(raw):
-            out.append(chr(raw[i + 1]))
-            i += 2
-        elif raw[i] == 0:
+def replace_all(buf: bytearray, needle: bytes, replacement: bytes, label: str) -> int:
+    if len(replacement) > len(needle):
+        raise ValueError(f"{label}: replacement too long")
+    padded = replacement + b"\x00" * (len(needle) - len(replacement))
+    count = 0
+    pos = 0
+    while True:
+        pos = buf.find(needle, pos)
+        if pos < 0:
             break
-        elif 32 <= raw[i] < 127:
-            out.append(chr(raw[i]))
-            i += 1
-        else:
-            i += 1
-    return "".join(out)
+        buf[pos : pos + len(needle)] = padded
+        count += 1
+        pos += len(needle)
+    return count
+
+
+def apply_string_replacements(buf: bytearray, rules: tuple[tuple[str, str, str], ...]) -> int:
+    total = 0
+    for original, value, encoding in rules:
+        needle = encode_plain(original) if encoding == "plain" else encode_obfuscated(original)
+        if needle not in buf:
+            continue
+        repl = encode_plain(value) if encoding == "plain" else encode_obfuscated(value)
+        if len(repl) != len(needle):
+            raise ValueError(f"{original!r} -> {value!r}: encoded length {len(repl)} != {len(needle)}")
+        total += replace_all(buf, needle, repl, original)
+    return total
 
 
 @dataclass(frozen=True)
@@ -72,32 +123,6 @@ class AmxProfile:
     replace_rules: tuple[ReplaceRule, ...]
 
 
-# MOD BR BONUS / decompiled test.amx (~63 MB, debug AMX)
-PROFILE_BR_BONUS = AmxProfile(
-    name="br_bonus",
-    mysql_offsets={
-        "host": 53_890_975,
-        "user": 53_890_985,
-        "password": 53_890_996,
-        "database": 53_891_007,
-        "charset": 53_891_097,
-    },
-    replace_rules=(
-        ReplaceRule("name", "RAME RUSSIA", "obf", "project"),
-        ReplaceRule("name_alt", "BLACK RUSSIA", "obf", "project"),
-        ReplaceRule("name_title", "Black Russia", "obf", "project"),
-        ReplaceRule("bonus_tag", "BRBONUS", "obf", "project"),
-        ReplaceRule("bonus_label", "BR BONUS", "plain", "project"),
-        ReplaceRule("bonus_label", "BR BONUS", "obf", "project"),
-        ReplaceRule("telegram", "t.me/brbonustest", "obf", "links"),
-        ReplaceRule("telegram_mobile", "t.me/prizmamobile", "obf", "links"),
-        ReplaceRule("forum", "forum.samp-tape.ru", "obf", "links"),
-        ReplaceRule("site", "SAMP-TAPE.RU", "obf", "links"),
-        ReplaceRule("vk", "vk.com/samp_mobi", "obf", "links"),
-    ),
-)
-
-# Production build from Google Drive (~18 MB, release AMX, Native Build 12/07/2026)
 PROFILE_LAIRD = AmxProfile(
     name="laird",
     mysql_offsets={
@@ -107,13 +132,30 @@ PROFILE_LAIRD = AmxProfile(
         "database": 18_191_500,
     },
     replace_rules=(
-        ReplaceRule("name", "RAME RUSSIA", "obf", "project"),
-        ReplaceRule("name_alt", "BLACK RUSSIA", "obf", "project"),
-        ReplaceRule("telegram", "t.me/l4ird", "obf", "links"),
-        ReplaceRule("forum", "forum.samp-tape.ru", "obf", "links"),
-        ReplaceRule("site", "SAMP-TAPE.RU", "obf", "links"),
-        ReplaceRule("vk", "vk.com/samp_mobi", "obf", "links"),
+        ReplaceRule("name", NEUTRAL["project"]["name"], "obf", "project"),
+        ReplaceRule("name_alt", NEUTRAL["project"]["name_alt"], "obf", "project"),
+        ReplaceRule("name_title", NEUTRAL["project"]["name_title"], "obf", "project"),
+        ReplaceRule("bonus_tag", NEUTRAL["project"]["bonus_tag"], "obf", "project"),
+        ReplaceRule("bonus_label", NEUTRAL["project"]["bonus_label"], "plain", "project"),
+        ReplaceRule("bonus_label", NEUTRAL["project"]["bonus_label"], "obf", "project"),
+        ReplaceRule("telegram", NEUTRAL["links"]["telegram"], "obf", "links"),
+        ReplaceRule("telegram_mobile", NEUTRAL["links"]["telegram_mobile"], "obf", "links"),
+        ReplaceRule("forum", NEUTRAL["links"]["forum"], "obf", "links"),
+        ReplaceRule("site", NEUTRAL["links"]["site"], "obf", "links"),
+        ReplaceRule("vk", NEUTRAL["links"]["vk"], "obf", "links"),
     ),
+)
+
+PROFILE_BR_BONUS = AmxProfile(
+    name="br_bonus",
+    mysql_offsets={
+        "host": 53_890_975,
+        "user": 53_890_985,
+        "password": 53_890_996,
+        "database": 53_891_007,
+        "charset": 53_891_097,
+    },
+    replace_rules=PROFILE_LAIRD.replace_rules,
 )
 
 
@@ -133,22 +175,6 @@ def patch_fixed_string(buf: bytearray, offset: int, encoded: bytes, limit: int, 
     buf[offset : offset + len(encoded)] = encoded
     for i in range(offset + len(encoded), end):
         buf[i] = 0
-
-
-def replace_all(buf: bytearray, needle: bytes, replacement: bytes, label: str) -> int:
-    if len(replacement) > len(needle):
-        raise ValueError(f"{label}: replacement too long")
-    padded = replacement + b"\x00" * (len(needle) - len(replacement))
-    count = 0
-    pos = 0
-    while True:
-        pos = buf.find(needle, pos)
-        if pos < 0:
-            break
-        buf[pos : pos + len(needle)] = padded
-        count += 1
-        pos += len(needle)
-    return count
 
 
 def load_config(path: Path) -> configparser.ConfigParser:
@@ -213,7 +239,52 @@ def apply_branding(buf: bytearray, cp: configparser.ConfigParser, profile: AmxPr
             continue
         needle = encode_plain(rule.original) if rule.encoding == "plain" else encode_obfuscated(rule.original)
         repl = encode_plain(value) if rule.encoding == "plain" else encode_obfuscated(value)
+        if len(repl) != len(needle):
+            continue
         total += replace_all(buf, needle, repl, f"{rule.section}.{rule.config_key}")
+    return total
+
+
+def sanitize_amx(buf: bytearray, profile: AmxProfile) -> int:
+    total = apply_string_replacements(buf, LEGACY_STRINGS)
+    mysql = NEUTRAL["mysql"]
+    patch_fixed_string(
+        buf,
+        profile.mysql_offsets["host"],
+        encode_plain(mysql["host"]),
+        MYSQL_LIMITS["host"],
+        "mysql.host",
+    )
+    patch_fixed_string(
+        buf,
+        profile.mysql_offsets["user"],
+        encode_obfuscated(mysql["user"]),
+        MYSQL_LIMITS["user"],
+        "mysql.user",
+    )
+    patch_fixed_string(
+        buf,
+        profile.mysql_offsets["password"],
+        encode_obfuscated(mysql["password"]),
+        MYSQL_LIMITS["password"],
+        "mysql.password",
+    )
+    patch_fixed_string(
+        buf,
+        profile.mysql_offsets["database"],
+        encode_obfuscated(mysql["database"]),
+        MYSQL_LIMITS["database"],
+        "mysql.database",
+    )
+    charset_off = profile.mysql_offsets.get("charset")
+    if charset_off is not None:
+        patch_fixed_string(
+            buf,
+            charset_off,
+            encode_obfuscated(mysql["charset"]),
+            MYSQL_LIMITS["charset"],
+            "mysql.charset",
+        )
     return total
 
 
@@ -259,7 +330,7 @@ def build_laird(root: Path, ini: Path, start: bool) -> int:
         return 0
     srv = root / "samp03svr"
     if not srv.is_file():
-        print("WARN: samp03svr not found — AMX ready, start server manually", file=sys.stderr)
+        print("WARN: samp03svr not found", file=sys.stderr)
         return 0
     if not (srv.stat().st_mode & 0o111):
         srv.chmod(srv.stat().st_mode | 0o111)
@@ -270,11 +341,28 @@ def build_laird(root: Path, ini: Path, start: bool) -> int:
     return 0
 
 
+def sanitize_source(path: Path) -> int:
+    buf = bytearray(path.read_bytes())
+    profile = detect_profile(buf)
+    count = sanitize_amx(buf, profile)
+    verify_amx(Path(path))
+    path.write_bytes(buf)
+    print(f"OK: sanitized {path.name} ({len(buf)} bytes, replacements={count})")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ini", type=Path, default=None)
     ap.add_argument("--no-start", action="store_true")
+    ap.add_argument("--sanitize-bak", type=Path, default=None)
     args = ap.parse_args()
+    if args.sanitize_bak:
+        try:
+            return sanitize_source(args.sanitize_bak)
+        except Exception as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 1
     root = Path(__file__).resolve().parent
     ini = args.ini or (root / "server_config.ini")
     if not ini.is_file():
