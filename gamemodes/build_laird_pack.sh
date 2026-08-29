@@ -137,7 +137,7 @@ install_plugin "$OLD/pc_3.3.3/pawncmd.so" pawncmd
 install_plugin "$OLD/pr141/pawnraknet.so" pawnraknet
 install_plugin "$CACHE/sampvoice30_x/sampvoice.so" sampvoice
 
-echo "=== step 5/7 server.cfg ==="
+echo "=== step 5/7 server.cfg + smoke test ==="
 cat > "$PACK/server.cfg" <<'EOF'
 echo Executing Server Config...
 lanmode 0
@@ -177,28 +177,50 @@ else
 fi
 rm -f server_log.txt svlog.txt mysql_log.txt
 
-echo "=== step 7/7 Zip ==="
+echo "=== step 7/7 Production server.cfg + zip ==="
+cat > "$PACK/server.cfg" <<'EOF'
+echo Executing Server Config...
+lanmode 0
+rcon_password change_me_123
+maxplayers 50
+bind 185.207.214.14
+port 5049
+hostname SA-MP Server
+gamemode0 Laird 1
+filterscripts
+announce 0
+query 1
+weburl www.sa-mp.com
+maxnpc 0
+onfoot_rate 40
+incar_rate 40
+weapon_rate 40
+stream_distance 300.0
+stream_rate 1000
+lagcompmode 1
+language Russian
+plugins json mysql sscanf streamer pawncmd pawnraknet sampvoice
+EOF
+
 cat > "$PACK/START.txt" <<EOF
 Готовый сервер — просто залить и запустить.
 
-MySQL в gamemodes/Laird.amx:
-  host=dbhost  port=5049  user=gs351646  db=gs351646
+MySQL (в gamemodes/Laird.amx):
+  host=127.0.0.1  port=3306  user=gs351646  db=gs351646
+
+server.cfg:
+  bind=185.207.214.14  port=5049
 
 ОДИН РАЗ перед первым запуском:
-  echo "185.207.214.14 dbhost" >> /etc/hosts
-  mysql -h dbhost -P 5049 -u gs351646 -p'9Jiqkof3vh0x' gs351646 < database/server_clean.sql
+  mysql -h 127.0.0.1 -u gs351646 -p'9Jiqkof3vh0x' gs351646 < database/server_clean.sql
 
 ЗАПУСК:
   ./samp03svr
-
-Порт игры: 7777
 EOF
 
-echo "185.207.214.14 dbhost" > "$PACK/database/hosts.line"
 cat > "$PACK/setup_once.sh" <<'EOF'
 #!/bin/bash
-grep -q 'dbhost' /etc/hosts 2>/dev/null || echo "185.207.214.14 dbhost" >> /etc/hosts
-mysql -h dbhost -P 5049 -u gs351646 -p'9Jiqkof3vh0x' gs351646 < database/server_clean.sql
+mysql -h 127.0.0.1 -u gs351646 -p'9Jiqkof3vh0x' gs351646 < database/server_clean.sql
 echo "OK — run: ./samp03svr"
 EOF
 chmod +x "$PACK/setup_once.sh"
