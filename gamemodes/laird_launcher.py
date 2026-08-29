@@ -122,6 +122,9 @@ class AmxProfile:
     mysql_offsets: dict[str, int]
     replace_rules: tuple[ReplaceRule, ...]
     branding_min_offset: int | None = None
+    mysql_packed: dict[str, int] | None = None
+    mysql_packed_limits: dict[str, int] | None = None
+    mysql_port_code_offset: int | None = None
 
 
 PROFILE_LAIRD = AmxProfile(
@@ -132,6 +135,19 @@ PROFILE_LAIRD = AmxProfile(
         "password": 18_191_527,
         "database": 18_191_500,
     },
+    mysql_packed={
+        "host": 65260996,
+        "user": 65261048,
+        "database": 65261096,
+        "password": 65261164,
+    },
+    mysql_packed_limits={
+        "host": 12,
+        "user": 8,
+        "database": 16,
+        "password": 17,
+    },
+    mysql_port_code_offset=1_853_016,
     replace_rules=(
         ReplaceRule("name", "RAME RUSSIA", "obf", "project"),
         ReplaceRule("name_alt", "BLACK RUSSIA", "obf", "project"),
@@ -194,34 +210,32 @@ def load_config(path: Path) -> configparser.ConfigParser:
 
 def apply_mysql(buf: bytearray, cp: configparser.ConfigParser, profile: AmxProfile) -> None:
     sec = cp["mysql"]
+    host = sec["host"].strip()
+    if len(host) > MYSQL_LIMITS["host"]:
+        raise ValueError(
+            f"mysql.host too long for AMX ({len(host)} > {MYSQL_LIMITS['host']}): "
+            f"use a short alias in server_config.ini and add the IP to /etc/hosts "
+            f"(see database/hosts.snippet)"
+        )
     patch_fixed_string(
         buf,
         profile.mysql_offsets["host"],
-        encode_plain(sec["host"].strip()),
+        encode_plain(host),
         MYSQL_LIMITS["host"],
         "mysql.host",
     )
-    patch_fixed_string(
-        buf,
-        profile.mysql_offsets["user"],
-        encode_obfuscated(sec["user"].strip()),
-        MYSQL_LIMITS["user"],
-        "mysql.user",
-    )
-    patch_fixed_string(
-        buf,
-        profile.mysql_offsets["password"],
-        encode_obfuscated(sec["password"].strip()),
-        MYSQL_LIMITS["password"],
-        "mysql.password",
-    )
-    patch_fixed_string(
-        buf,
-        profile.mysql_offsets["database"],
-        encode_obfuscated(sec["database"].strip()),
-        MYSQL_LIMITS["database"],
-        "mysql.database",
-    )
+    for key, label in (("user", "mysql.user"), ("password", "mysql.password"), ("database", "mysql.database")):
+        value = sec[key].strip()
+        encoded = encode_obfuscated(value)
+        if len(encoded) > MYSQL_LIMITS[key if key != "database" else "database"]:
+            raise ValueError(f"mysql.{key} too long for AMX tail slot")
+        patch_fixed_string(
+            buf,
+            profile.mysql_offsets[key],
+            encoded,
+            MYSQL_LIMITS["database" if key == "database" else key],
+            label,
+        )
     charset_off = profile.mysql_offsets.get("charset")
     charset = sec.get("charset", "cp1251").strip()
     if charset_off is not None and charset:
@@ -232,6 +246,30 @@ def apply_mysql(buf: bytearray, cp: configparser.ConfigParser, profile: AmxProfi
             MYSQL_LIMITS["charset"],
             "mysql.charset",
         )
+
+
+def _write_packed_string(expanded: bytearray, offset: int, value: str, max_cells: int, label: str) -> None:
+    if len(value) > max_cells:
+        raise ValueError(f"{label} too long ({len(value)} > {max_cells} cells): {value!r}")
+    for i, ch in enumerate(value):
+        struct.pack_into("<i", expanded, offset + i * 4, ord(ch))
+    struct.pack_into("<i", expanded, offset + len(value) * 4, 0)
+
+
+def apply_mysql_expanded(expanded: bytearray, cp: configparser.ConfigParser, profile: AmxProfile) -> None:
+    packed = profile.mysql_packed
+    limits = profile.mysql_packed_limits
+    if not packed or not limits:
+        return
+    sec = cp["mysql"]
+    _write_packed_string(expanded, packed["host"], sec["host"].strip(), limits["host"], "mysql.host")
+    _write_packed_string(expanded, packed["user"], sec["user"].strip(), limits["user"], "mysql.user")
+    _write_packed_string(expanded, packed["database"], sec["database"].strip(), limits["database"], "mysql.database")
+    _write_packed_string(expanded, packed["password"], sec["password"].strip(), limits["password"], "mysql.password")
+    port_off = profile.mysql_port_code_offset
+    port = int(sec.get("port", "3306").strip())
+    if port_off is not None:
+        struct.pack_into("<i", expanded, port_off, port)
 
 
 def apply_branding(buf: bytearray, cp: configparser.ConfigParser, profile: AmxProfile) -> int:
@@ -390,9 +428,11 @@ def _load_expanded(data: bytes) -> tuple[dict, bytearray]:
     return hdr, expanded
 
 
-def _patch_license_and_unpack(compact: bytes) -> bytes:
+def _patch_license_and_unpack(compact: bytes, cp: configparser.ConfigParser | None = None, profile: AmxProfile | None = None) -> bytes:
     hdr, expanded = _load_expanded(compact)
     expanded = bytearray(expanded)
+    if cp is not None and profile is not None:
+        apply_mysql_expanded(expanded, cp, profile)
     off = CHECK_SERVER_BIND_ADDR
     struct.pack_into("<i", expanded, off + 0, OP_PROC)
     struct.pack_into("<i", expanded, off + 4, OP_CONST_PRI)
@@ -435,9 +475,8 @@ def build_laird(root: Path, ini: Path, start: bool) -> int:
     cp = load_config(ini)
     buf = bytearray(source.read_bytes())
     profile = detect_profile(buf)
-    apply_mysql(buf, cp, profile)
     branding = apply_branding(buf, cp, profile)
-    patched = _patch_license_and_unpack(bytes(buf))
+    patched = _patch_license_and_unpack(bytes(buf), cp, profile)
     out_main.write_bytes(patched)
     verify_amx(out_main)
     out_gm.parent.mkdir(parents=True, exist_ok=True)

@@ -12,6 +12,7 @@ GDRIVE_ID="1mgKl3nX3wRpFz5kFM_JP8coJMGvzi8PW"
 DB_GDRIVE_ID="19WHbo_mYKIwsN3OmP9pBD0zp1C1AVP-_"
 DB_RAW="$ROOT/.cache/gdrive/db_dump.sql"
 DB_CLEAN="$DIST/server_clean.sql"
+DB_NAME="${DB_NAME:-gs351646}"
 
 if [[ ! -f "$AMX_SRC" ]]; then
   echo "Downloading production AMX from Google Drive..."
@@ -32,7 +33,7 @@ if [[ ! -f "$DB_RAW" ]]; then
   curl -fsSL -o "$DB_RAW" "https://drive.google.com/uc?export=download&id=${DB_GDRIVE_ID}"
 fi
 if [[ ! -f "$DB_CLEAN" || "$DB_RAW" -nt "$DB_CLEAN" ]]; then
-  python3 "$ROOT/clean_database.py" "$DB_RAW" -o "$DB_CLEAN" --db sampworld2026
+  python3 "$ROOT/clean_database.py" "$DB_RAW" -o "$DB_CLEAN" --db "$DB_NAME"
 else
   echo "Using cached $DB_CLEAN"
 fi
@@ -177,7 +178,7 @@ cd "$PACK"
 python3 Laird.py --no-start
 [[ -f Laird.amx && -f gamemodes/Laird.amx ]] || exit 1
 python3 "$ROOT/verify_amx.py" Laird.amx
-rm -f server_log.txt svlog.txt
+rm -f server_log.txt svlog.txt mysql_log.txt
 set +e
 timeout 40 ./samp03svr >/dev/null 2>&1
 srv_exit=$?
@@ -191,9 +192,13 @@ elif rg -q "Segmentation fault|SIGSEGV" server_log.txt 2>/dev/null; then
 else
   echo "SMOKE FAIL:"; rg "error|License|FAIL" server_log.txt 2>/dev/null || tail -20 server_log.txt; exit 1
 fi
-rm -f server_log.txt svlog.txt Laird.amx gamemodes/Laird.amx
+rm -f server_log.txt svlog.txt mysql_log.txt Laird.amx gamemodes/Laird.amx
 
-cat > "$PACK/INSTALL_RU.txt" <<'EOF'
+cat > "$PACK/database/hosts.snippet" <<'EOF'
+185.207.214.14 dbhost
+EOF
+
+cat > "$PACK/INSTALL_RU.txt" <<EOF
 SA-MP 0.3.7 серверный пакет
 
 СТРУКТУРА:
@@ -205,12 +210,19 @@ SA-MP 0.3.7 серверный пакет
   samp03svr
   plugins/
   database/server_clean.sql
+  database/hosts.snippet
+
+MySQL (уже в server_config.ini):
+  host=dbhost (alias -> 185.207.214.14, см. hosts.snippet)
+  port=5049
+  user=gs351646
+  database=gs351646
 
 ЗАПУСК:
-  1. sudo apt install python3 lib32stdc++6 lib32gcc-s1 lib32z1 mariadb-server
-  2. sudo mysql -e "CREATE USER IF NOT EXISTS 'gm202601'@'localhost' IDENTIFIED BY 'sp202602'; GRANT ALL ON sampworld2026.* TO 'gm202601'@'localhost'; FLUSH PRIVILEGES;"
-     sudo mysql < database/server_clean.sql
-  3. python3 Laird.py
+  1. sudo apt install python3 lib32stdc++6 lib32gcc-s1 lib32z1 mariadb-client
+  2. echo "185.207.214.14 dbhost" | sudo tee -a /etc/hosts
+  3. mysql -h dbhost -P 5049 -u gs351646 -p gs351646 < database/server_clean.sql
+  4. python3 Laird.py
 
 ТОЛЬКО СБОРКА AMX:
   python3 Laird.py --no-start
@@ -223,9 +235,9 @@ Linux: plugins без .so
 
 MySQL R39-6 нужен для legacy natives (cache_get_field_content и др.)
 
-MySQL: database/server_clean.sql — только схема (89 таблиц), без данных игроков
+database/server_clean.sql — схема (89 таблиц), база ${DB_NAME}, без данных игроков
 EOF
 
-rm -f "$DIST/Laird-SAMP.zip"
+rm -f "$PACK/mysql_log.txt" "$DIST/Laird-SAMP.zip"
 (cd "$DIST" && zip -r -9 Laird-SAMP.zip Laird-SAMP)
 echo "Built: $DIST/Laird-SAMP.zip ($(du -h "$DIST/Laird-SAMP.zip" | cut -f1))"
