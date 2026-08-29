@@ -179,19 +179,29 @@ rm -f server_log.txt svlog.txt mysql_log.txt
 
 echo "=== step 7/7 Zip ==="
 cat > "$PACK/START.txt" <<EOF
-Готовый сервер. MySQL уже в gamemodes/Laird.amx
+Готовый сервер — просто залить и запустить.
 
-БД: ${DB_NAME} @ 185.207.214.14:5049
-user: gs351646  pass: 9Jiqkof3vh0x
+MySQL в gamemodes/Laird.amx:
+  host=dbhost  port=5049  user=gs351646  db=gs351646
 
-1) Залить SQL (один раз):
-   mysql -h 185.207.214.14 -P 5049 -u gs351646 -p'9Jiqkof3vh0x' gs351646 < database/server_clean.sql
+ОДИН РАЗ перед первым запуском:
+  echo "185.207.214.14 dbhost" >> /etc/hosts
+  mysql -h dbhost -P 5049 -u gs351646 -p'9Jiqkof3vh0x' gs351646 < database/server_clean.sql
 
-2) Запуск:
-   ./samp03svr
+ЗАПУСК:
+  ./samp03svr
 
 Порт игры: 7777
 EOF
+
+echo "185.207.214.14 dbhost" > "$PACK/database/hosts.line"
+cat > "$PACK/setup_once.sh" <<'EOF'
+#!/bin/bash
+grep -q 'dbhost' /etc/hosts 2>/dev/null || echo "185.207.214.14 dbhost" >> /etc/hosts
+mysql -h dbhost -P 5049 -u gs351646 -p'9Jiqkof3vh0x' gs351646 < database/server_clean.sql
+echo "OK — run: ./samp03svr"
+EOF
+chmod +x "$PACK/setup_once.sh"
 
 rm -f "$DIST/Laird-SAMP.zip"
 (cd "$DIST" && zip -r -9 Laird-SAMP.zip Laird-SAMP)

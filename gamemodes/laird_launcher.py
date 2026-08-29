@@ -142,7 +142,7 @@ PROFILE_LAIRD = AmxProfile(
         "password": 65261164,
     },
     mysql_packed_limits={
-        "host": 14,
+        "host": 12,
         "user": 8,
         "database": 16,
         "password": 17,
@@ -262,7 +262,13 @@ def apply_mysql_expanded(expanded: bytearray, cp: configparser.ConfigParser, pro
     if not packed or not limits:
         return
     sec = cp["mysql"]
-    _write_packed_string(expanded, packed["host"], sec["host"].strip(), limits["host"], "mysql.host")
+    host = sec["host"].strip()
+    if len(host) > limits["host"]:
+        raise ValueError(
+            f"mysql.host {host!r} too long for AMX ({len(host)} > {limits['host']}). "
+            f"Use short alias (e.g. dbhost) and add IP to /etc/hosts."
+        )
+    _write_packed_string(expanded, packed["host"], host, limits["host"], "mysql.host")
     _write_packed_string(expanded, packed["user"], sec["user"].strip(), limits["user"], "mysql.user")
     _write_packed_string(expanded, packed["database"], sec["database"].strip(), limits["database"], "mysql.database")
     _write_packed_string(expanded, packed["password"], sec["password"].strip(), limits["password"], "mysql.password")
