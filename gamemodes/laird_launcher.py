@@ -150,7 +150,7 @@ PROFILE_LAIRD = AmxProfile(
         "password": 8,
     },
     mysql_port_code_offset=1_853_016,
-    mysql_password_dat=980_052,
+    mysql_password_dat=980_064,
     mysql_password_pushc_off=3_967_260,
     replace_rules=(
         ReplaceRule("name", "RAME RUSSIA", "obf", "project"),
@@ -287,15 +287,18 @@ def _write_packed_string(expanded: bytearray, offset: int, value: str, max_cells
     struct.pack_into("<i", expanded, offset + len(value) * 4, 0)
 
 
-# mysql_connect 2D array at DAT 979268, header [16, 272, 528, 784] (4 x 64-cell slots).
-# Original format(dest, 65, "%s", src) writes one cell into the next slot and zeroes the
-# password's first cell — mysql then gets a garbage/empty password (1045 → 2006).
+# mysql_connect 2D array at DAT 979268, header [16, 272, 528, 784].
+# Dest address is (array + field*4) + header[field]:
+#   host 979284, user 979544, database 979804, password 980064.
+# R39-6 native is (host, user, database, password); Laird pawn passes
+# (host, user, password, database), so password/database dests are swapped
+# when patching. format size 65 is shrunk to 64 to avoid slot overflow.
 LAIRD_MYSQL_ARRAY_DAT = 979_268
 LAIRD_MYSQL_RUNTIME = {
-    "host": 979_284,  # array + 16
-    "user": 979_540,  # array + 272
-    "database": 979_796,  # array + 528
-    "password": 980_052,  # array + 784
+    "host": 979_284,
+    "user": 979_544,
+    "database": 979_804,
+    "password": 980_064,
 }
 LAIRD_MYSQL_FORMAT_SIZE_OFFS = (3_967_032, 3_967_108, 3_967_192, 3_967_276)
 LAIRD_MYSQL_PASSWORD_FORMAT_PUSH = 3_967_256  # PUSH.C packed password source
@@ -340,10 +343,23 @@ def apply_mysql_expanded(
     if len(password) > 63:
         raise ValueError(f"mysql.password too long ({len(password)} > 63)")
     # Packed password slot is only 8 cells and sits against laird_server_settings.ini.
-    # Never write a long password there.
+    # R39-6 native is mysql_connect(host, user, database, password). Laird pawn calls
+    # mysql_connect(host, user, password, database), so the last two AMX slots are swapped
+    # at the plugin boundary: put password in the "database" slot and database in "password".
+    if len(password) > limits["database"]:
+        raise ValueError(
+            f"mysql.password {password!r} too long for swapped AMX slot "
+            f"({len(password)} > {limits['database']})"
+        )
+    if len(database) > limits["password"]:
+        raise ValueError(
+            f"mysql.database {database!r} too long for swapped AMX slot "
+            f"({len(database)} > {limits['password']})"
+        )
     _write_packed_string(expanded, packed["host"], host, limits["host"], "mysql.host")
     _write_packed_string(expanded, packed["user"], user, limits["user"], "mysql.user")
-    _write_packed_string(expanded, packed["database"], database, limits["database"], "mysql.database")
+    _write_packed_string(expanded, packed["database"], password, limits["database"], "mysql.password")
+    _write_packed_string(expanded, packed["password"], database, limits["password"], "mysql.database")
     if code_size is None:
         raise ValueError("code_size required for mysql runtime patch")
     header = [struct.unpack_from("<i", expanded, code_size + LAIRD_MYSQL_ARRAY_DAT + i * 4)[0] for i in range(4)]
@@ -354,14 +370,11 @@ def apply_mysql_expanded(
         if size not in (64, 65):
             raise ValueError(f"mysql format size site mismatch at {off}: {size}")
         struct.pack_into("<i", expanded, off, 64)
-    values = {"host": host, "user": user, "database": database, "password": password}
+    # Native dests: 979804 is passed as plugin-database (pawn password arg),
+    # 980064 as plugin-password (pawn database arg).
+    values = {"host": host, "user": user, "database": password, "password": database}
     for key, dat in LAIRD_MYSQL_RUNTIME.items():
         _write_packed_string(expanded, code_size + dat, values[key], 63, f"mysql.runtime.{key}")
-    # Skip password format() so it cannot overwrite dest with the 8-char packed source.
-    if struct.unpack_from("<i", expanded, LAIRD_MYSQL_PASSWORD_FORMAT_PUSH)[0] != OP_PUSH_C:
-        raise ValueError("mysql password format site mismatch")
-    struct.pack_into("<i", expanded, LAIRD_MYSQL_PASSWORD_FORMAT_PUSH, OP_JUMP)
-    struct.pack_into("<i", expanded, LAIRD_MYSQL_PASSWORD_FORMAT_PUSH + 4, LAIRD_MYSQL_AFTER_PASSWORD_FORMAT)
     got = {
         key: _read_packed_string(expanded, code_size + dat)
         for key, dat in LAIRD_MYSQL_RUNTIME.items()
@@ -464,8 +477,10 @@ def verify_unpacked_mysql_amx(path: Path, cp: configparser.ConfigParser) -> None
     expected = {
         "host": sec["host"].strip(),
         "user": sec["user"].strip(),
-        "database": sec["database"].strip(),
-        "password": sec["password"].strip(),
+        # R39-6 native (host, user, database, password); Laird pawn passes
+        # (host, user, password, database) so dests are swapped.
+        "database": sec["password"].strip(),
+        "password": sec["database"].strip(),
     }
     got = {k: _read_packed_string(data, dat + off) for k, off in LAIRD_MYSQL_RUNTIME.items()}
     if got != expected:
@@ -474,10 +489,6 @@ def verify_unpacked_mysql_amx(path: Path, cp: configparser.ConfigParser) -> None
         size = struct.unpack_from("<i", data, cod + off)[0]
         if size != 64:
             raise ValueError(f"format size at {off} is {size}, want 64")
-    op = struct.unpack_from("<i", data, cod + LAIRD_MYSQL_PASSWORD_FORMAT_PUSH)[0]
-    tgt = struct.unpack_from("<i", data, cod + LAIRD_MYSQL_PASSWORD_FORMAT_PUSH + 4)[0]
-    if op != OP_JUMP or tgt != LAIRD_MYSQL_AFTER_PASSWORD_FORMAT:
-        raise ValueError(f"password format skip mismatch op={op} tgt={tgt}")
     settings_name = _read_packed_string(data, dat + LAIRD_SETTINGS_PACKED_DAT, 32)
     if settings_name != LAIRD_SETTINGS_NAME:
         raise ValueError(f"settings filename clobbered: {settings_name!r}")
