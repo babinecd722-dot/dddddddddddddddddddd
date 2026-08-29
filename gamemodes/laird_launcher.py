@@ -121,6 +121,7 @@ class AmxProfile:
     name: str
     mysql_offsets: dict[str, int]
     replace_rules: tuple[ReplaceRule, ...]
+    branding_min_offset: int | None = None
 
 
 PROFILE_LAIRD = AmxProfile(
@@ -132,18 +133,20 @@ PROFILE_LAIRD = AmxProfile(
         "database": 18_191_500,
     },
     replace_rules=(
-        ReplaceRule("name", NEUTRAL["project"]["name"], "obf", "project"),
-        ReplaceRule("name_alt", NEUTRAL["project"]["name_alt"], "obf", "project"),
-        ReplaceRule("name_title", NEUTRAL["project"]["name_title"], "obf", "project"),
-        ReplaceRule("bonus_tag", NEUTRAL["project"]["bonus_tag"], "obf", "project"),
-        ReplaceRule("bonus_label", NEUTRAL["project"]["bonus_label"], "plain", "project"),
-        ReplaceRule("bonus_label", NEUTRAL["project"]["bonus_label"], "obf", "project"),
-        ReplaceRule("telegram", NEUTRAL["links"]["telegram"], "obf", "links"),
-        ReplaceRule("telegram_mobile", NEUTRAL["links"]["telegram_mobile"], "obf", "links"),
-        ReplaceRule("forum", NEUTRAL["links"]["forum"], "obf", "links"),
-        ReplaceRule("site", NEUTRAL["links"]["site"], "obf", "links"),
-        ReplaceRule("vk", NEUTRAL["links"]["vk"], "obf", "links"),
+        ReplaceRule("name", "RAME RUSSIA", "obf", "project"),
+        ReplaceRule("name_alt", "BLACK RUSSIA", "obf", "project"),
+        ReplaceRule("name_title", "Black Russia", "obf", "project"),
+        ReplaceRule("bonus_tag", "BRBONUS", "obf", "project"),
+        ReplaceRule("bonus_label", "BR BONUS", "plain", "project"),
+        ReplaceRule("bonus_label", "BR BONUS", "obf", "project"),
+        ReplaceRule("telegram", "t.me/l4ird", "obf", "links"),
+        ReplaceRule("telegram", "t.me/brbonustest", "obf", "links"),
+        ReplaceRule("telegram_mobile", "t.me/prizmamobile", "obf", "links"),
+        ReplaceRule("forum", "forum.samp-tape.ru", "obf", "links"),
+        ReplaceRule("site", "SAMP-TAPE.RU", "obf", "links"),
+        ReplaceRule("vk", "vk.com/samp_mobi", "obf", "links"),
     ),
+    branding_min_offset=18_000_000,
 )
 
 PROFILE_BR_BONUS = AmxProfile(
@@ -233,6 +236,7 @@ def apply_mysql(buf: bytearray, cp: configparser.ConfigParser, profile: AmxProfi
 
 def apply_branding(buf: bytearray, cp: configparser.ConfigParser, profile: AmxProfile) -> int:
     total = 0
+    min_off = profile.branding_min_offset
     for rule in profile.replace_rules:
         value = cp[rule.section].get(rule.config_key, "").strip()
         if not value:
@@ -241,7 +245,16 @@ def apply_branding(buf: bytearray, cp: configparser.ConfigParser, profile: AmxPr
         repl = encode_plain(value) if rule.encoding == "plain" else encode_obfuscated(value)
         if len(repl) != len(needle):
             continue
-        total += replace_all(buf, needle, repl, f"{rule.section}.{rule.config_key}")
+        pos = 0
+        while True:
+            pos = buf.find(needle, pos)
+            if pos < 0:
+                break
+            if min_off is None or pos >= min_off:
+                padded = repl + b"\x00" * (len(needle) - len(repl))
+                buf[pos : pos + len(needle)] = padded
+                total += 1
+            pos += len(needle)
     return total
 
 
@@ -297,6 +310,111 @@ def verify_amx(path: Path) -> None:
         raise ValueError(f"Bad AMX magic 0x{magic:04x}")
 
 
+AMX_COMPACTMARGIN = 4
+CHECK_SERVER_BIND_ADDR = 0x414E1C
+OP_PROC = 46
+OP_CONST_PRI = 11
+OP_RETN = 48
+
+
+def _parse_amx_header(data: bytes) -> dict:
+    size, magic, fv, av, flags, defsize = struct.unpack_from("<IHbbhh", data, 0)
+    if magic != 0xF1E0:
+        raise ValueError(f"bad magic 0x{magic:04x}")
+    cod, dat, hea, stp, cip, publics, natives, libraries = struct.unpack_from("<8i", data, 12)
+    return {
+        "size": size,
+        "flags": flags,
+        "cod": cod,
+        "dat": dat,
+        "hea": hea,
+        "stp": stp,
+        "cip": cip,
+        "publics": publics,
+        "natives": natives,
+        "libraries": libraries,
+        "compact": bool(flags & 0x04),
+    }
+
+
+def _expand_compact(code: bytes, memsize: int) -> bytearray:
+    codesize = len(code)
+    buf = bytearray(memsize)
+    spare: list[tuple[int, int]] = []
+    sh = st = sc = 0
+    pos = codesize
+    while pos > 0:
+        c = shift = 0
+        while True:
+            pos -= 1
+            b = code[pos]
+            c |= (b & 0x7F) << shift
+            shift += 7
+            if pos == 0 or (code[pos - 1] & 0x80) == 0:
+                break
+        if code[pos] & 0x40:
+            while shift < 32:
+                c |= 0xFF << shift
+                shift += 8
+        c &= 0xFFFFFFFF
+        packed = c - 0x100000000 if c >= 0x80000000 else c
+        while sc and spare[sh][0] > pos:
+            loc, val = spare[sh]
+            struct.pack_into("<i", buf, loc, val)
+            sh = (sh + 1) % AMX_COMPACTMARGIN
+            sc -= 1
+        memsize -= 4
+        if memsize < 0:
+            raise ValueError("compact expand overflow")
+        if memsize > pos or (memsize == pos and memsize == 0):
+            struct.pack_into("<i", buf, memsize, packed)
+        else:
+            if sc >= AMX_COMPACTMARGIN:
+                raise ValueError("compact spare overflow")
+            spare[st] = (memsize, packed)
+            st = (st + 1) % AMX_COMPACTMARGIN
+            sc += 1
+    if memsize != 0:
+        raise ValueError(f"compact expand incomplete, memsize={memsize}")
+    return buf
+
+
+def _load_expanded(data: bytes) -> tuple[dict, bytearray]:
+    hdr = _parse_amx_header(data)
+    blob = data[hdr["cod"] : hdr["size"]]
+    memsize = hdr["hea"] - hdr["cod"]
+    if hdr["compact"]:
+        expanded = _expand_compact(blob, memsize)
+    else:
+        expanded = bytearray(blob[:memsize].ljust(memsize, b"\x00"))
+    return hdr, expanded
+
+
+def _patch_license_and_unpack(compact: bytes) -> bytes:
+    hdr, expanded = _load_expanded(compact)
+    expanded = bytearray(expanded)
+    off = CHECK_SERVER_BIND_ADDR
+    struct.pack_into("<i", expanded, off + 0, OP_PROC)
+    struct.pack_into("<i", expanded, off + 4, OP_CONST_PRI)
+    struct.pack_into("<i", expanded, off + 8, 1)
+    struct.pack_into("<i", expanded, off + 12, OP_RETN)
+    code_size = hdr["dat"] - hdr["cod"]
+    data_size = hdr["hea"] - hdr["dat"]
+    code_bytes = bytes(expanded[:code_size])
+    data_bytes = bytes(expanded[code_size : code_size + data_size])
+    cod_off = hdr["cod"]
+    dat_off = cod_off + len(code_bytes)
+    hea_off = dat_off + len(data_bytes)
+    out = bytearray(compact[:cod_off])
+    struct.pack_into("<I", out, 0, hea_off)
+    struct.pack_into("<h", out, 8, hdr["flags"] & ~0x04)
+    struct.pack_into("<i", out, 16, dat_off)
+    struct.pack_into("<i", out, 20, hea_off)
+    out.extend(code_bytes)
+    out.extend(data_bytes)
+    return bytes(out)
+
+
 def find_source_amx(sources: Path) -> Path:
     if not sources.is_dir():
         raise FileNotFoundError(f"Sources folder not found: {sources}")
@@ -319,12 +437,13 @@ def build_laird(root: Path, ini: Path, start: bool) -> int:
     profile = detect_profile(buf)
     apply_mysql(buf, cp, profile)
     branding = apply_branding(buf, cp, profile)
-    out_main.write_bytes(buf)
+    patched = _patch_license_and_unpack(bytes(buf))
+    out_main.write_bytes(patched)
     verify_amx(out_main)
     out_gm.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(out_main, out_gm)
     print(f"OK: profile={profile.name} source={source.name}")
-    print(f"OK: {out_main.name} ({len(buf)} bytes, branding={branding})")
+    print(f"OK: {out_main.name} ({len(patched)} bytes, branding={branding})")
     print(f"OK: gamemodes/{out_gm.name}")
     if not start:
         return 0

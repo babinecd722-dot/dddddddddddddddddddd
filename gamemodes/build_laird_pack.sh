@@ -7,6 +7,7 @@ PACK="$DIST/Laird-SAMP"
 CACHE="$ROOT/.cache/laird-downloads"
 OLD="$CACHE/oldplugins"
 AMX_SRC="$ROOT/laird_gamemode.amx.bak"
+ORIGINAL_MD5="6719bbead932f5f452e31e15119d03a3"
 GDRIVE_ID="1mgKl3nX3wRpFz5kFM_JP8coJMGvzi8PW"
 DB_GDRIVE_ID="19WHbo_mYKIwsN3OmP9pBD0zp1C1AVP-_"
 DB_RAW="$ROOT/.cache/gdrive/db_dump.sql"
@@ -18,16 +19,23 @@ if [[ ! -f "$AMX_SRC" ]]; then
 fi
 [[ -f "$AMX_SRC" ]] || { echo "ERROR: missing $AMX_SRC" >&2; exit 1; }
 
-echo "=== step 0/9 Sanitize AMX ==="
-python3 "$ROOT/laird_launcher.py" --sanitize-bak "$AMX_SRC"
+AMX_MD5="$(md5sum "$AMX_SRC" | awk '{print $1}')"
+if [[ "$AMX_MD5" != "$ORIGINAL_MD5" ]]; then
+  echo "ERROR: AMX md5=$AMX_MD5 expected $ORIGINAL_MD5 (sanitized AMX breaks natives/branding)" >&2
+  exit 1
+fi
 
-echo "=== step 1/9 Clean MySQL dump ==="
+echo "=== step 1/8 Clean MySQL dump ==="
 mkdir -p "$ROOT/.cache/gdrive"
 if [[ ! -f "$DB_RAW" ]]; then
   echo "Downloading DB dump from Google Drive..."
   curl -fsSL -o "$DB_RAW" "https://drive.google.com/uc?export=download&id=${DB_GDRIVE_ID}"
 fi
-python3 "$ROOT/clean_database.py" "$DB_RAW" -o "$DB_CLEAN" --db sampworld2026
+if [[ ! -f "$DB_CLEAN" || "$DB_RAW" -nt "$DB_CLEAN" ]]; then
+  python3 "$ROOT/clean_database.py" "$DB_RAW" -o "$DB_CLEAN" --db sampworld2026
+else
+  echo "Using cached $DB_CLEAN"
+fi
 
 install_plugin() {
   local src="$1" name="$2"
@@ -81,16 +89,22 @@ ensure_old_plugins() {
       "https://github.com/Y-Less/sscanf/releases/download/v2.8.3/sscanf-2.8.3-linux.tar.gz"
     tar -xzf "$OLD/ss283.tgz" -C "$OLD/ss283"
   fi
+  if [[ ! -f "$OLD/mysql396/plugins/mysql_static.so" ]]; then
+    mkdir -p "$OLD/mysql396"
+    curl -fsSL -o "$OLD/mysql396.tgz" \
+      "https://github.com/pBlueG/SA-MP-MySQL/releases/download/R39-6/mysql-R39-6-Linux.tar.gz"
+    tar -xzf "$OLD/mysql396.tgz" -C "$OLD/mysql396"
+  fi
 }
 
-echo "=== step 2/9 Verify AMX ==="
+echo "=== step 2/8 Verify AMX ==="
 python3 "$ROOT/verify_amx.py" "$AMX_SRC"
 rm -rf "$PACK"
 mkdir -p "$CACHE" "$OLD" "$PACK/Sources" "$PACK/gamemodes" "$PACK/plugins" "$PACK/scriptfiles" "$PACK/logs" "$PACK/database"
 cp "$AMX_SRC" "$PACK/Sources/gamemode.amx"
 cp "$DB_CLEAN" "$PACK/database/server_clean.sql"
 
-echo "=== step 3/9 server_config.ini ==="
+echo "=== step 3/8 server_config.ini ==="
 python3 <<PY
 import sys
 sys.path.insert(0, "$ROOT")
@@ -102,7 +116,7 @@ Path("$PACK/server_config.ini").write_text(
 )
 PY
 
-echo "=== step 4/9 SA-MP 0.3.7 R2-2-1 ==="
+echo "=== step 4/8 SA-MP 0.3.7 R2-2-1 ==="
 SAMP_TGZ="$CACHE/samp037svr_R2-2-1.tar.gz"
 [[ -f "$SAMP_TGZ" ]] || curl -fsSL -o "$SAMP_TGZ" \
   "https://raw.githubusercontent.com/Se8870/SAMP-File-Archive/master/archives/samp037svr_R2-2-1.tar.gz"
@@ -112,14 +126,10 @@ cp "$(find "$CACHE/samp03" -name samp03svr | head -1)" "$PACK/samp03svr"
 cp "$(find "$CACHE/samp03" -name announce | head -1)" "$PACK/announce" 2>/dev/null || true
 chmod +x "$PACK/samp03svr" "$PACK/announce" 2>/dev/null || true
 
-echo "=== step 5/9 Plugins ==="
+echo "=== step 5/8 Plugins ==="
 ensure_old_plugins
 
-MX="$(fetch_asset mysql "https://github.com/pBlueG/SA-MP-MySQL/releases/download/R41-4/mysql-R41-4-Debian-static.tar.gz")"
-install_plugin "$(find "$MX" -name mysql.so | head -1)" mysql
-install_plugin "$(find "$MX" -name log-core.so | head -1)" log-core
-cp "$PACK/plugins/log-core" "$PACK/plugins/log-core.so"
-
+install_plugin "$OLD/mysql396/plugins/mysql_static.so" mysql
 install_plugin "$OLD/ss283/plugins/sscanf.so" sscanf
 install_plugin "$OLD/st294/plugins/streamer.so" streamer
 
@@ -131,12 +141,11 @@ install_plugin "$OLD/pc_3.3.3/pawncmd.so" pawncmd
 install_plugin "$OLD/pr141/pawnraknet.so" pawnraknet
 install_plugin "$CACHE/sampvoice30_x/sampvoice.so" sampvoice
 
-for p in mysql log-core sscanf streamer json pawncmd pawnraknet sampvoice; do
+for p in mysql sscanf streamer json pawncmd pawnraknet sampvoice; do
   [[ -f "$PACK/plugins/$p" ]] || { echo "FAIL: missing plugin $p"; exit 1; }
 done
-[[ -f "$PACK/plugins/log-core.so" ]] || { echo "FAIL: missing log-core.so"; exit 1; }
 
-echo "=== step 6/9 server.cfg ==="
+echo "=== step 6/8 server.cfg ==="
 cat > "$PACK/server.cfg" <<'EOF'
 echo Executing Server Config...
 lanmode 0
@@ -160,32 +169,27 @@ language Russian
 plugins json mysql sscanf streamer pawncmd pawnraknet sampvoice
 EOF
 
-echo "=== step 7/9 Obfuscated Laird.py ==="
+echo "=== step 7/8 Obfuscated Laird.py ==="
 python3 "$ROOT/pack_obfuscator.py" --source "$ROOT/laird_launcher.py" --out-py "$PACK/Laird.py"
 
-echo "=== step 8/9 Test Laird.py ==="
+echo "=== step 8/8 Test Laird.py + smoke ==="
 cd "$PACK"
 python3 Laird.py --no-start
 [[ -f Laird.amx && -f gamemodes/Laird.amx ]] || exit 1
 python3 "$ROOT/verify_amx.py" Laird.amx
-
-echo "=== step 9/9 Smoke test ==="
-rm -f Laird.amx gamemodes/Laird.amx server_log.txt svlog.txt
-python3 Laird.py --no-start
+rm -f server_log.txt svlog.txt
 set +e
-timeout 45 ./samp03svr >/dev/null 2>&1
+timeout 40 ./samp03svr >/dev/null 2>&1
 srv_exit=$?
 set -e
-if rg -q "Loaded 7 plugins" server_log.txt 2>/dev/null; then
-  echo "SMOKE OK: 7 plugins loaded, exit=$srv_exit"
+if rg -q "Loaded 7 plugins" server_log.txt 2>/dev/null \
+   && ! rg -q "Run time error 19|Run time error 17|License .* rejected" server_log.txt 2>/dev/null \
+   && rg -q "LAIRD_SYSTEM" server_log.txt 2>/dev/null; then
+  echo "SMOKE OK: gamemode loaded, no error 17/19/license, exit=$srv_exit"
 elif rg -q "Segmentation fault|SIGSEGV" server_log.txt 2>/dev/null; then
   echo "SMOKE FAIL: segfault"; tail -20 server_log.txt; exit 1
 else
-  echo "SMOKE WARN:"; tail -15 server_log.txt 2>/dev/null || true
-fi
-if rg -q "Mismatch between the plugin" server_log.txt 2>/dev/null; then
-  echo "WARN: plugin/include mismatch detected"
-  rg "Mismatch" server_log.txt || true
+  echo "SMOKE FAIL:"; rg "error|License|FAIL" server_log.txt 2>/dev/null || tail -20 server_log.txt; exit 1
 fi
 rm -f server_log.txt svlog.txt Laird.amx gamemodes/Laird.amx
 
@@ -212,10 +216,12 @@ SA-MP 0.3.7 серверный пакет
   python3 Laird.py --no-start
 
 ПЛАГИНЫ:
-  json 1.4.1 | mysql R41-4 + log-core | sscanf 2.8.3 | streamer 2.9.4
+  json 1.4.1 | mysql R39-6 static | sscanf 2.8.3 | streamer 2.9.4
   pawncmd 3.3.3 | pawnraknet 1.4.1 | sampvoice 3.0-alpha
 
-Linux: plugins без .so, кроме log-core.so
+Linux: plugins без .so
+
+MySQL R39-6 нужен для legacy natives (cache_get_field_content и др.)
 
 MySQL: database/server_clean.sql — только схема (89 таблиц), без данных игроков
 EOF
