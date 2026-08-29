@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST="$ROOT/dist"
 PACK="$DIST/Laird-SAMP"
+STAGE="$DIST/.pack-build"
 CACHE="$ROOT/.cache/laird-downloads"
 OLD="$CACHE/oldplugins"
 AMX_SRC="$ROOT/laird_gamemode.amx.bak"
@@ -22,14 +23,13 @@ fi
 
 AMX_MD5="$(md5sum "$AMX_SRC" | awk '{print $1}')"
 if [[ "$AMX_MD5" != "$ORIGINAL_MD5" ]]; then
-  echo "ERROR: AMX md5=$AMX_MD5 expected $ORIGINAL_MD5 (sanitized AMX breaks natives/branding)" >&2
+  echo "ERROR: AMX md5=$AMX_MD5 expected $ORIGINAL_MD5" >&2
   exit 1
 fi
 
-echo "=== step 1/8 Clean MySQL dump ==="
+echo "=== step 1/7 DB ==="
 mkdir -p "$ROOT/.cache/gdrive"
 if [[ ! -f "$DB_RAW" ]]; then
-  echo "Downloading DB dump from Google Drive..."
   curl -fsSL -o "$DB_RAW" "https://drive.google.com/uc?export=download&id=${DB_GDRIVE_ID}"
 fi
 if [[ ! -f "$DB_CLEAN" || "$DB_RAW" -nt "$DB_CLEAN" ]]; then
@@ -39,85 +39,85 @@ else
 fi
 
 install_plugin() {
-  local src="$1" name="$2"
-  cp "$src" "$PACK/plugins/$name"
-  chmod +x "$PACK/plugins/$name"
-}
-
-fetch_asset() {
-  local tag="$1" url="$2"
-  local ext=".tar.gz"
-  [[ "$url" == *.zip ]] && ext=".zip"
-  local dest="$CACHE/${tag}${ext}"
-  rm -rf "$CACHE/${tag}_x" && mkdir -p "$CACHE/${tag}_x"
-  [[ -f "$dest" ]] || curl -fsSL -o "$dest" "$url"
-  case "$dest" in
-    *.zip) unzip -qo "$dest" -d "$CACHE/${tag}_x" ;;
-    *.tar.gz) tar -xzf "$dest" -C "$CACHE/${tag}_x" ;;
-  esac
-  echo "$CACHE/${tag}_x"
+  cp "$1" "$PACK/plugins/$2"
+  chmod +x "$PACK/plugins/$2"
 }
 
 ensure_old_plugins() {
   mkdir -p "$OLD"
-  if [[ ! -f "$OLD/pc_3.3.3/pawncmd.so" ]]; then
+  [[ -f "$OLD/pc_3.3.3/pawncmd.so" ]] || {
     mkdir -p "$OLD/pc_3.3.3"
     curl -fsSL -o "$OLD/pc333.tgz" \
       "https://github.com/katursis/Pawn.CMD/releases/download/3.3.3/pawncmd-3.3.3-linux.tar.gz"
     tar -xzf "$OLD/pc333.tgz" -C "$OLD/pc_3.3.3"
-  fi
-  if [[ ! -f "$OLD/pr141/pawnraknet.so" ]]; then
+  }
+  [[ -f "$OLD/pr141/pawnraknet.so" ]] || {
     mkdir -p "$OLD/pr141"
     curl -fsSL -o "$OLD/pr141.tgz" \
       "https://github.com/katursis/Pawn.RakNet/releases/download/1.4.1/pawnraknet-1.4.1-linux.tar.gz"
     tar -xzf "$OLD/pr141.tgz" -C "$OLD/pr141"
-  fi
-  if [[ ! -f "$CACHE/sampvoice30_x/sampvoice.so" ]]; then
+  }
+  [[ -f "$CACHE/sampvoice30_x/sampvoice.so" ]] || {
     mkdir -p "$CACHE/sampvoice30_x"
     curl -fsSL -o "$CACHE/sv_server_30.zip" \
       "https://github.com/CyberMor/sampvoice/releases/download/v3.0-alpha/sv_server.zip"
     unzip -qo "$CACHE/sv_server_30.zip" -d "$CACHE/sampvoice30_x"
-  fi
-  if [[ ! -f "$OLD/st294/plugins/streamer.so" ]]; then
+  }
+  [[ -f "$OLD/st294/plugins/streamer.so" ]] || {
     mkdir -p "$OLD/st294"
     curl -fsSL -o "$OLD/st294.zip" \
       "https://github.com/samp-incognito/samp-streamer-plugin/releases/download/v2.9.4/samp-streamer-plugin-2.9.4.zip"
     unzip -qo "$OLD/st294.zip" -d "$OLD/st294"
-  fi
-  if [[ ! -f "$OLD/ss283/plugins/sscanf.so" ]]; then
+  }
+  [[ -f "$OLD/ss283/plugins/sscanf.so" ]] || {
     mkdir -p "$OLD/ss283"
     curl -fsSL -o "$OLD/ss283.tgz" \
       "https://github.com/Y-Less/sscanf/releases/download/v2.8.3/sscanf-2.8.3-linux.tar.gz"
     tar -xzf "$OLD/ss283.tgz" -C "$OLD/ss283"
-  fi
-  if [[ ! -f "$OLD/mysql396/plugins/mysql_static.so" ]]; then
+  }
+  [[ -f "$OLD/mysql396/plugins/mysql_static.so" ]] || {
     mkdir -p "$OLD/mysql396"
     curl -fsSL -o "$OLD/mysql396.tgz" \
       "https://github.com/pBlueG/SA-MP-MySQL/releases/download/R39-6/mysql-R39-6-Linux.tar.gz"
     tar -xzf "$OLD/mysql396.tgz" -C "$OLD/mysql396"
-  fi
+  }
 }
 
-echo "=== step 2/8 Verify AMX ==="
+echo "=== step 2/7 Build patched AMX ==="
 python3 "$ROOT/verify_amx.py" "$AMX_SRC"
-rm -rf "$PACK"
-mkdir -p "$CACHE" "$OLD" "$PACK/Sources" "$PACK/gamemodes" "$PACK/plugins" "$PACK/scriptfiles" "$PACK/logs" "$PACK/database"
-cp "$AMX_SRC" "$PACK/Sources/gamemode.amx"
-cp "$DB_CLEAN" "$PACK/database/server_clean.sql"
-
-echo "=== step 3/8 server_config.ini ==="
+rm -rf "$STAGE"
+mkdir -p "$STAGE/Sources" "$STAGE/gamemodes"
+cp "$AMX_SRC" "$STAGE/Sources/gamemode.amx"
 python3 <<PY
 import sys
 sys.path.insert(0, "$ROOT")
 from pack_obfuscator import strip_ini_comments
 from pathlib import Path
-Path("$PACK/server_config.ini").write_text(
+Path("$STAGE/server_config.ini").write_text(
     strip_ini_comments(Path("$ROOT/server_config.ini").read_text(encoding="utf-8")),
     encoding="utf-8",
 )
 PY
+cd "$STAGE"
+python3 <<PY
+import sys
+from pathlib import Path
+sys.path.insert(0, "$ROOT")
+from laird_launcher import build_laird
+build_laird(Path("$STAGE"), Path("server_config.ini"), start=False)
+PY
+[[ -f gamemodes/Laird.amx ]] || { echo "FAIL: gamemodes/Laird.amx not built"; exit 1; }
+python3 "$ROOT/verify_amx.py" gamemodes/Laird.amx
 
-echo "=== step 4/8 SA-MP 0.3.7 R2-2-1 ==="
+echo "=== step 3/7 Pack layout ==="
+rm -rf "$PACK"
+mkdir -p "$PACK/gamemodes" "$PACK/plugins" "$PACK/scriptfiles" "$PACK/logs" "$PACK/database"
+cp "$STAGE/gamemodes/Laird.amx" "$PACK/gamemodes/Laird.amx"
+cp "$DB_CLEAN" "$PACK/database/server_clean.sql"
+rm -rf "$STAGE"
+
+echo "=== step 4/7 SA-MP + plugins ==="
+ensure_old_plugins
 SAMP_TGZ="$CACHE/samp037svr_R2-2-1.tar.gz"
 [[ -f "$SAMP_TGZ" ]] || curl -fsSL -o "$SAMP_TGZ" \
   "https://raw.githubusercontent.com/Se8870/SAMP-File-Archive/master/archives/samp037svr_R2-2-1.tar.gz"
@@ -127,26 +127,17 @@ cp "$(find "$CACHE/samp03" -name samp03svr | head -1)" "$PACK/samp03svr"
 cp "$(find "$CACHE/samp03" -name announce | head -1)" "$PACK/announce" 2>/dev/null || true
 chmod +x "$PACK/samp03svr" "$PACK/announce" 2>/dev/null || true
 
-echo "=== step 5/8 Plugins ==="
-ensure_old_plugins
-
 install_plugin "$OLD/mysql396/plugins/mysql_static.so" mysql
 install_plugin "$OLD/ss283/plugins/sscanf.so" sscanf
 install_plugin "$OLD/st294/plugins/streamer.so" streamer
-
 JS="$CACHE/json.so"
 [[ -f "$JS" ]] || curl -fsSL -o "$JS" "https://github.com/Southclaws/pawn-json/releases/download/1.4.1/json.so"
 install_plugin "$JS" json
-
 install_plugin "$OLD/pc_3.3.3/pawncmd.so" pawncmd
 install_plugin "$OLD/pr141/pawnraknet.so" pawnraknet
 install_plugin "$CACHE/sampvoice30_x/sampvoice.so" sampvoice
 
-for p in mysql sscanf streamer json pawncmd pawnraknet sampvoice; do
-  [[ -f "$PACK/plugins/$p" ]] || { echo "FAIL: missing plugin $p"; exit 1; }
-done
-
-echo "=== step 6/8 server.cfg ==="
+echo "=== step 5/7 server.cfg ==="
 cat > "$PACK/server.cfg" <<'EOF'
 echo Executing Server Config...
 lanmode 0
@@ -170,74 +161,39 @@ language Russian
 plugins json mysql sscanf streamer pawncmd pawnraknet sampvoice
 EOF
 
-echo "=== step 7/8 Obfuscated Laird.py ==="
-python3 "$ROOT/pack_obfuscator.py" --source "$ROOT/laird_launcher.py" --out-py "$PACK/Laird.py"
-
-echo "=== step 8/8 Test Laird.py + smoke ==="
+echo "=== step 6/7 Smoke test ==="
 cd "$PACK"
-python3 Laird.py --no-start
-[[ -f Laird.amx && -f gamemodes/Laird.amx ]] || exit 1
-python3 "$ROOT/verify_amx.py" Laird.amx
 rm -f server_log.txt svlog.txt mysql_log.txt
 set +e
 timeout 40 ./samp03svr >/dev/null 2>&1
-srv_exit=$?
 set -e
 if rg -q "Loaded 7 plugins" server_log.txt 2>/dev/null \
    && ! rg -q "Run time error 19|Run time error 17|License .* rejected" server_log.txt 2>/dev/null \
    && rg -q "LAIRD_SYSTEM" server_log.txt 2>/dev/null; then
-  echo "SMOKE OK: gamemode loaded, no error 17/19/license, exit=$srv_exit"
-elif rg -q "Segmentation fault|SIGSEGV" server_log.txt 2>/dev/null; then
-  echo "SMOKE FAIL: segfault"; tail -20 server_log.txt; exit 1
+  echo "SMOKE OK"
 else
-  echo "SMOKE FAIL:"; rg "error|License|FAIL" server_log.txt 2>/dev/null || tail -20 server_log.txt; exit 1
+  echo "SMOKE FAIL:"; rg "error|License|FAIL|Unable" server_log.txt 2>/dev/null || tail -20 server_log.txt
+  exit 1
 fi
-rm -f server_log.txt svlog.txt mysql_log.txt Laird.amx gamemodes/Laird.amx
+rm -f server_log.txt svlog.txt mysql_log.txt
 
-cat > "$PACK/database/hosts.snippet" <<'EOF'
-185.207.214.14 dbhost
+echo "=== step 7/7 Zip ==="
+cat > "$PACK/START.txt" <<EOF
+Готовый сервер. MySQL уже в gamemodes/Laird.amx
+
+БД: ${DB_NAME} @ 185.207.214.14:5049
+user: gs351646  pass: 9Jiqkof3vh0x
+
+1) Залить SQL (один раз):
+   mysql -h 185.207.214.14 -P 5049 -u gs351646 -p'9Jiqkof3vh0x' gs351646 < database/server_clean.sql
+
+2) Запуск:
+   ./samp03svr
+
+Порт игры: 7777
 EOF
 
-cat > "$PACK/INSTALL_RU.txt" <<EOF
-SA-MP 0.3.7 серверный пакет
-
-СТРУКТУРА:
-  Laird.py
-  Laird.amx
-  Sources/gamemode.amx
-  server_config.ini
-  server.cfg
-  samp03svr
-  plugins/
-  database/server_clean.sql
-  database/hosts.snippet
-
-MySQL (уже в server_config.ini):
-  host=dbhost (alias -> 185.207.214.14, см. hosts.snippet)
-  port=5049
-  user=gs351646
-  database=gs351646
-
-ЗАПУСК:
-  1. sudo apt install python3 lib32stdc++6 lib32gcc-s1 lib32z1 mariadb-client
-  2. echo "185.207.214.14 dbhost" | sudo tee -a /etc/hosts
-  3. mysql -h dbhost -P 5049 -u gs351646 -p gs351646 < database/server_clean.sql
-  4. python3 Laird.py
-
-ТОЛЬКО СБОРКА AMX:
-  python3 Laird.py --no-start
-
-ПЛАГИНЫ:
-  json 1.4.1 | mysql R39-6 static | sscanf 2.8.3 | streamer 2.9.4
-  pawncmd 3.3.3 | pawnraknet 1.4.1 | sampvoice 3.0-alpha
-
-Linux: plugins без .so
-
-MySQL R39-6 нужен для legacy natives (cache_get_field_content и др.)
-
-database/server_clean.sql — схема (89 таблиц), база ${DB_NAME}, без данных игроков
-EOF
-
-rm -f "$PACK/mysql_log.txt" "$DIST/Laird-SAMP.zip"
+rm -f "$DIST/Laird-SAMP.zip"
 (cd "$DIST" && zip -r -9 Laird-SAMP.zip Laird-SAMP)
 echo "Built: $DIST/Laird-SAMP.zip ($(du -h "$DIST/Laird-SAMP.zip" | cut -f1))"
+ls -la "$PACK/gamemodes/"

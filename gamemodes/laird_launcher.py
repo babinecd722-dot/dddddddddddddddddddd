@@ -142,7 +142,7 @@ PROFILE_LAIRD = AmxProfile(
         "password": 65261164,
     },
     mysql_packed_limits={
-        "host": 12,
+        "host": 14,
         "user": 8,
         "database": 16,
         "password": 17,
