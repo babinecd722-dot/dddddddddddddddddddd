@@ -212,7 +212,15 @@ def load_config(path: Path) -> configparser.ConfigParser:
     return cp
 
 
-def apply_mysql(buf: bytearray, cp: configparser.ConfigParser, profile: AmxProfile) -> None:
+LAIRD_SETTINGS_NAME = "laird_server_settings.ini"
+LAIRD_SETTINGS_NAME_OFF = 18_191_538
+
+
+def apply_mysql(
+    buf: bytearray,
+    cp: configparser.ConfigParser,
+    profile: AmxProfile,
+) -> None:
     sec = cp["mysql"]
     host = sec["host"].strip()
     if len(host) > MYSQL_LIMITS["host"]:
@@ -228,33 +236,57 @@ def apply_mysql(buf: bytearray, cp: configparser.ConfigParser, profile: AmxProfi
         MYSQL_LIMITS["host"],
         "mysql.host",
     )
-    for key, label in (("user", "mysql.user"), ("database", "mysql.database")):
-        value = sec[key].strip()
-        encoded = encode_obfuscated(value)
-        limit = MYSQL_LIMITS["database" if key == "database" else key]
-        if len(encoded) > limit:
-            raise ValueError(f"mysql.{key} too long for AMX tail slot")
+    user = sec["user"].strip()
+    user_enc = encode_obfuscated(user)
+    if len(user_enc) > MYSQL_LIMITS["user"]:
+        raise ValueError("mysql.user too long for AMX tail slot")
+    patch_fixed_string(
+        buf,
+        profile.mysql_offsets["user"],
+        user_enc,
+        MYSQL_LIMITS["user"],
+        "mysql.user",
+    )
+    password = sec["password"].strip()
+    database = sec["database"].strip()
+    pass_enc = encode_obfuscated(password)
+    db_enc = encode_obfuscated(database)
+    if profile.name == "laird":
+        # mysql_connect(host,user,pass,db): long password -> database slot (88), db name -> password slot (10)
+        if len(pass_enc) > MYSQL_LIMITS["database"]:
+            raise ValueError(f"mysql.password too long ({len(pass_enc)} > {MYSQL_LIMITS['database']})")
+        if len(db_enc) > MYSQL_LIMITS["password"]:
+            raise ValueError(f"mysql.database too long ({len(db_enc)} > {MYSQL_LIMITS['password']})")
         patch_fixed_string(
             buf,
-            profile.mysql_offsets[key],
-            encoded,
-            limit,
-            label,
+            profile.mysql_offsets["database"],
+            pass_enc,
+            MYSQL_LIMITS["database"],
+            "mysql.password",
         )
-    password = sec["password"].strip()
-    pass_encoded = encode_obfuscated(password)
-    pass_off = profile.mysql_offsets["password"]
-    if len(pass_encoded) > MYSQL_LIMITS["password"]:
-        print(
-            f"WARN: mysql.password tail slot fits {MYSQL_LIMITS['password']} bytes obf, "
-            f"got {len(pass_encoded)} — using packed password only",
-            file=sys.stderr,
+        patch_fixed_string(
+            buf,
+            profile.mysql_offsets["password"],
+            db_enc,
+            MYSQL_LIMITS["password"],
+            "mysql.database",
         )
     else:
+        if len(db_enc) > MYSQL_LIMITS["database"]:
+            raise ValueError("mysql.database too long for AMX tail slot")
         patch_fixed_string(
             buf,
-            pass_off,
-            pass_encoded,
+            profile.mysql_offsets["database"],
+            db_enc,
+            MYSQL_LIMITS["database"],
+            "mysql.database",
+        )
+        if len(pass_enc) > MYSQL_LIMITS["password"]:
+            raise ValueError("mysql.password too long for AMX tail slot")
+        patch_fixed_string(
+            buf,
+            profile.mysql_offsets["password"],
+            pass_enc,
             MYSQL_LIMITS["password"],
             "mysql.password",
         )

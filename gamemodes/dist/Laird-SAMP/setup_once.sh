@@ -12,5 +12,6 @@ if ! mysql -h "$H" -u "$U" -p"$P" "$D" -e "SELECT 1;" 2>/dev/null; then
 fi
 mysql -h "$H" -u "$U" -p"$P" "$D" < "$SQL"
 chmod -R 777 scriptfiles logs 2>/dev/null || true
+chmod 666 laird_server_settings.ini scriptfiles/laird_server_settings.ini 2>/dev/null || true
 echo "OK — проверка: ./check_db.sh"
 echo "Запуск: ./samp03svr"

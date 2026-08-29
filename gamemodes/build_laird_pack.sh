@@ -125,6 +125,7 @@ site=MY-SERVER.RU
 audio_url=
 chat=1
 EOF
+cp "$PACK/scriptfiles/laird_server_settings.ini" "$PACK/laird_server_settings.ini"
 chmod 666 "$PACK/scriptfiles/whitelist.ini" "$PACK/scriptfiles/laird_server_settings.ini" 2>/dev/null || true
 cp "$STAGE/gamemodes/Laird.amx" "$PACK/gamemodes/Laird.amx"
 cp "$DB_CLEAN" "$PACK/database/server_clean.sql"
@@ -280,6 +281,7 @@ if ! mysql -h "$H" -u "$U" -p"$P" "$D" -e "SELECT 1;" 2>/dev/null; then
 fi
 mysql -h "$H" -u "$U" -p"$P" "$D" < "$SQL"
 chmod -R 777 scriptfiles logs 2>/dev/null || true
+chmod 666 laird_server_settings.ini scriptfiles/laird_server_settings.ini 2>/dev/null || true
 echo "OK — проверка: ./check_db.sh"
 echo "Запуск: ./samp03svr"
 EOF
