@@ -125,6 +125,8 @@ class AmxProfile:
     mysql_packed: dict[str, int] | None = None
     mysql_packed_limits: dict[str, int] | None = None
     mysql_port_code_offset: int | None = None
+    mysql_password_dat: int | None = None
+    mysql_password_pushc_off: int | None = None
 
 
 PROFILE_LAIRD = AmxProfile(
@@ -142,12 +144,14 @@ PROFILE_LAIRD = AmxProfile(
         "password": 65261164,
     },
     mysql_packed_limits={
-        "host": 12,
+        "host": 9,
         "user": 8,
-        "database": 16,
-        "password": 17,
+        "database": 13,
+        "password": 8,
     },
     mysql_port_code_offset=1_853_016,
+    mysql_password_dat=990_000,
+    mysql_password_pushc_off=3_967_260,
     replace_rules=(
         ReplaceRule("name", "RAME RUSSIA", "obf", "project"),
         ReplaceRule("name_alt", "BLACK RUSSIA", "obf", "project"),
@@ -247,48 +251,21 @@ def apply_mysql(
         MYSQL_LIMITS["user"],
         "mysql.user",
     )
-    password = sec["password"].strip()
-    database = sec["database"].strip()
-    pass_enc = encode_obfuscated(password)
-    db_enc = encode_obfuscated(database)
-    if profile.name == "laird":
-        # mysql_connect(host,user,pass,db): long password -> database slot (88), db name -> password slot (10)
-        if len(pass_enc) > MYSQL_LIMITS["database"]:
-            raise ValueError(f"mysql.password too long ({len(pass_enc)} > {MYSQL_LIMITS['database']})")
-        if len(db_enc) > MYSQL_LIMITS["password"]:
-            raise ValueError(f"mysql.database too long ({len(db_enc)} > {MYSQL_LIMITS['password']})")
+    for key, label in (("user", "mysql.user"), ("password", "mysql.password"), ("database", "mysql.database")):
+        if key == "user":
+            continue
+        value = sec[key].strip()
+        encoded = encode_obfuscated(value)
+        limit = MYSQL_LIMITS["database" if key == "database" else key]
+        if len(encoded) > limit:
+            print(f"WARN: skip compact {label}, encoded len {len(encoded)} > {limit}", file=sys.stderr)
+            continue
         patch_fixed_string(
             buf,
-            profile.mysql_offsets["database"],
-            pass_enc,
-            MYSQL_LIMITS["database"],
-            "mysql.password",
-        )
-        patch_fixed_string(
-            buf,
-            profile.mysql_offsets["password"],
-            db_enc,
-            MYSQL_LIMITS["password"],
-            "mysql.database",
-        )
-    else:
-        if len(db_enc) > MYSQL_LIMITS["database"]:
-            raise ValueError("mysql.database too long for AMX tail slot")
-        patch_fixed_string(
-            buf,
-            profile.mysql_offsets["database"],
-            db_enc,
-            MYSQL_LIMITS["database"],
-            "mysql.database",
-        )
-        if len(pass_enc) > MYSQL_LIMITS["password"]:
-            raise ValueError("mysql.password too long for AMX tail slot")
-        patch_fixed_string(
-            buf,
-            profile.mysql_offsets["password"],
-            pass_enc,
-            MYSQL_LIMITS["password"],
-            "mysql.password",
+            profile.mysql_offsets[key],
+            encoded,
+            limit,
+            label,
         )
     charset_off = profile.mysql_offsets.get("charset")
     charset = sec.get("charset", "cp1251").strip()
@@ -310,7 +287,12 @@ def _write_packed_string(expanded: bytearray, offset: int, value: str, max_cells
     struct.pack_into("<i", expanded, offset + len(value) * 4, 0)
 
 
-def apply_mysql_expanded(expanded: bytearray, cp: configparser.ConfigParser, profile: AmxProfile) -> None:
+def apply_mysql_expanded(
+    expanded: bytearray,
+    cp: configparser.ConfigParser,
+    profile: AmxProfile,
+    code_size: int | None = None,
+) -> None:
     packed = profile.mysql_packed
     limits = profile.mysql_packed_limits
     if not packed or not limits:
@@ -325,7 +307,19 @@ def apply_mysql_expanded(expanded: bytearray, cp: configparser.ConfigParser, pro
     _write_packed_string(expanded, packed["host"], host, limits["host"], "mysql.host")
     _write_packed_string(expanded, packed["user"], sec["user"].strip(), limits["user"], "mysql.user")
     _write_packed_string(expanded, packed["database"], sec["database"].strip(), limits["database"], "mysql.database")
-    _write_packed_string(expanded, packed["password"], sec["password"].strip(), limits["password"], "mysql.password")
+    password = sec["password"].strip()
+    spare_dat = profile.mysql_password_dat
+    push_off = profile.mysql_password_pushc_off
+    if spare_dat is not None and push_off is not None:
+        if code_size is None:
+            raise ValueError("code_size required for spare password patch")
+        spare_exp = code_size + spare_dat
+        _write_packed_string(expanded, spare_exp, password, 32, "mysql.password")
+        if struct.unpack_from("<i", expanded, push_off - 4)[0] != 39:
+            raise ValueError("mysql password push.c site mismatch")
+        struct.pack_into("<i", expanded, push_off, spare_dat)
+    else:
+        _write_packed_string(expanded, packed["password"], password, limits["password"], "mysql.password")
     port_off = profile.mysql_port_code_offset
     port = int(sec.get("port", "3306").strip())
     if port_off is not None:
@@ -492,7 +486,7 @@ def _patch_license_and_unpack(compact: bytes, cp: configparser.ConfigParser | No
     hdr, expanded = _load_expanded(compact)
     expanded = bytearray(expanded)
     if cp is not None and profile is not None:
-        apply_mysql_expanded(expanded, cp, profile)
+        apply_mysql_expanded(expanded, cp, profile, code_size=hdr["dat"] - hdr["cod"])
     off = CHECK_SERVER_BIND_ADDR
     struct.pack_into("<i", expanded, off + 0, OP_PROC)
     struct.pack_into("<i", expanded, off + 4, OP_CONST_PRI)
@@ -552,8 +546,6 @@ def build_laird(root: Path, ini: Path, start: bool) -> int:
     branding = apply_branding(buf, cp, profile)
     patched = _patch_license_and_unpack(bytes(buf), cp, profile)
     out_buf = bytearray(patched)
-    restore_runtime_string_block(bytes(buf), out_buf, profile)
-    apply_mysql(out_buf, cp, profile)
     out_main.write_bytes(out_buf)
     verify_amx(out_main)
     out_gm.parent.mkdir(parents=True, exist_ok=True)

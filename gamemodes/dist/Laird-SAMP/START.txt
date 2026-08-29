@@ -1,23 +1,16 @@
 Готовый сервер — залить, импорт БД, запустить.
 
-MySQL (в gamemodes/Laird.amx):
-  host=127.0.0.1  port=3306  user=gs351646  db=gs351646
+MySQL в моде (не трогать server.cfg):
+  host=127.0.0.1  port=3306  user=gs351646  password=9Jiqkof3vh0x  db=gs351646
 
 server.cfg:
   bind=185.207.214.14  port=5049
 
-ОБЯЗАТЕЛЬНО ПЕРЕД ПЕРВЫМ ЗАПУСКОМ — импорт базы:
-  ./setup_once.sh
-  (или phpMyAdmin: импорт database/server_clean.sql в базу gs351646)
+Файлы, без которых мод орёт Error while opening settings file:
+  scriptfiles/laird_server_settings.ini
+  scriptfiles/whitelist.ini
 
-Проверка MySQL:
-  ./check_db.sh
-
-Права на папки (если whitelist.ini не пишется):
+ОБЯЗАТЕЛЬНО:
   chmod -R 777 scriptfiles logs
-
-ЗАПУСК:
+  ./setup_once.sh
   ./samp03svr
-
-Если в логе «Не удалось подключится к базе данных» / errno 2006:
-  база не импортирована или MySQL недоступен — сначала ./check_db.sh
