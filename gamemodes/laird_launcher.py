@@ -150,7 +150,7 @@ PROFILE_LAIRD = AmxProfile(
         "password": 8,
     },
     mysql_port_code_offset=1_853_016,
-    mysql_password_dat=990_000,
+    mysql_password_dat=980_052,
     mysql_password_pushc_off=3_967_260,
     replace_rules=(
         ReplaceRule("name", "RAME RUSSIA", "obf", "project"),
@@ -287,6 +287,36 @@ def _write_packed_string(expanded: bytearray, offset: int, value: str, max_cells
     struct.pack_into("<i", expanded, offset + len(value) * 4, 0)
 
 
+# mysql_connect 2D array at DAT 979268, header [16, 272, 528, 784] (4 x 64-cell slots).
+# Original format(dest, 65, "%s", src) writes one cell into the next slot and zeroes the
+# password's first cell — mysql then gets a garbage/empty password (1045 → 2006).
+LAIRD_MYSQL_ARRAY_DAT = 979_268
+LAIRD_MYSQL_RUNTIME = {
+    "host": 979_284,  # array + 16
+    "user": 979_540,  # array + 272
+    "database": 979_796,  # array + 528
+    "password": 980_052,  # array + 784
+}
+LAIRD_MYSQL_FORMAT_SIZE_OFFS = (3_967_032, 3_967_108, 3_967_192, 3_967_276)
+LAIRD_MYSQL_PASSWORD_FORMAT_PUSH = 3_967_256  # PUSH.C packed password source
+LAIRD_MYSQL_AFTER_PASSWORD_FORMAT = 3_967_336
+LAIRD_SETTINGS_PACKED_DAT = 60_980_164
+OP_PUSH_C = 39
+OP_JUMP = 51
+
+
+def _read_packed_string(expanded: bytearray, offset: int, max_cells: int = 64) -> str:
+    chars: list[str] = []
+    for i in range(max_cells):
+        ch = struct.unpack_from("<i", expanded, offset + i * 4)[0]
+        if ch == 0:
+            break
+        if not (32 <= ch < 127):
+            break
+        chars.append(chr(ch))
+    return "".join(chars)
+
+
 def apply_mysql_expanded(
     expanded: bytearray,
     cp: configparser.ConfigParser,
@@ -299,27 +329,48 @@ def apply_mysql_expanded(
         return
     sec = cp["mysql"]
     host = sec["host"].strip()
+    user = sec["user"].strip()
+    database = sec["database"].strip()
+    password = sec["password"].strip()
     if len(host) > limits["host"]:
         raise ValueError(
             f"mysql.host {host!r} too long for AMX ({len(host)} > {limits['host']}). "
             f"Use short alias (e.g. dbhost) and add IP to /etc/hosts."
         )
+    if len(password) > 63:
+        raise ValueError(f"mysql.password too long ({len(password)} > 63)")
+    # Packed password slot is only 8 cells and sits against laird_server_settings.ini.
+    # Never write a long password there.
     _write_packed_string(expanded, packed["host"], host, limits["host"], "mysql.host")
-    _write_packed_string(expanded, packed["user"], sec["user"].strip(), limits["user"], "mysql.user")
-    _write_packed_string(expanded, packed["database"], sec["database"].strip(), limits["database"], "mysql.database")
-    password = sec["password"].strip()
-    spare_dat = profile.mysql_password_dat
-    push_off = profile.mysql_password_pushc_off
-    if spare_dat is not None and push_off is not None:
-        if code_size is None:
-            raise ValueError("code_size required for spare password patch")
-        spare_exp = code_size + spare_dat
-        _write_packed_string(expanded, spare_exp, password, 32, "mysql.password")
-        if struct.unpack_from("<i", expanded, push_off - 4)[0] != 39:
-            raise ValueError("mysql password push.c site mismatch")
-        struct.pack_into("<i", expanded, push_off, spare_dat)
-    else:
-        _write_packed_string(expanded, packed["password"], password, limits["password"], "mysql.password")
+    _write_packed_string(expanded, packed["user"], user, limits["user"], "mysql.user")
+    _write_packed_string(expanded, packed["database"], database, limits["database"], "mysql.database")
+    if code_size is None:
+        raise ValueError("code_size required for mysql runtime patch")
+    header = [struct.unpack_from("<i", expanded, code_size + LAIRD_MYSQL_ARRAY_DAT + i * 4)[0] for i in range(4)]
+    if header != [16, 272, 528, 784]:
+        raise ValueError(f"mysql 2D array header mismatch: {header}")
+    for off in LAIRD_MYSQL_FORMAT_SIZE_OFFS:
+        size = struct.unpack_from("<i", expanded, off)[0]
+        if size not in (64, 65):
+            raise ValueError(f"mysql format size site mismatch at {off}: {size}")
+        struct.pack_into("<i", expanded, off, 64)
+    values = {"host": host, "user": user, "database": database, "password": password}
+    for key, dat in LAIRD_MYSQL_RUNTIME.items():
+        _write_packed_string(expanded, code_size + dat, values[key], 63, f"mysql.runtime.{key}")
+    # Skip password format() so it cannot overwrite dest with the 8-char packed source.
+    if struct.unpack_from("<i", expanded, LAIRD_MYSQL_PASSWORD_FORMAT_PUSH)[0] != OP_PUSH_C:
+        raise ValueError("mysql password format site mismatch")
+    struct.pack_into("<i", expanded, LAIRD_MYSQL_PASSWORD_FORMAT_PUSH, OP_JUMP)
+    struct.pack_into("<i", expanded, LAIRD_MYSQL_PASSWORD_FORMAT_PUSH + 4, LAIRD_MYSQL_AFTER_PASSWORD_FORMAT)
+    got = {
+        key: _read_packed_string(expanded, code_size + dat)
+        for key, dat in LAIRD_MYSQL_RUNTIME.items()
+    }
+    if got != values:
+        raise ValueError(f"mysql runtime dest mismatch after patch: {got}")
+    settings_name = _read_packed_string(expanded, code_size + LAIRD_SETTINGS_PACKED_DAT, 32)
+    if settings_name != LAIRD_SETTINGS_NAME:
+        raise ValueError(f"settings filename clobbered: {settings_name!r}")
     port_off = profile.mysql_port_code_offset
     port = int(sec.get("port", "3306").strip())
     if port_off is not None:
@@ -400,6 +451,36 @@ def verify_amx(path: Path) -> None:
     magic = struct.unpack_from("<H", data, 4)[0]
     if magic != 0xF1E0:
         raise ValueError(f"Bad AMX magic 0x{magic:04x}")
+
+
+def verify_unpacked_mysql_amx(path: Path, cp: configparser.ConfigParser) -> None:
+    data = bytearray(path.read_bytes())
+    hdr = _parse_amx_header(data)
+    if hdr["compact"]:
+        raise ValueError("expected unpacked AMX")
+    dat = hdr["dat"]
+    cod = hdr["cod"]
+    sec = cp["mysql"]
+    expected = {
+        "host": sec["host"].strip(),
+        "user": sec["user"].strip(),
+        "database": sec["database"].strip(),
+        "password": sec["password"].strip(),
+    }
+    got = {k: _read_packed_string(data, dat + off) for k, off in LAIRD_MYSQL_RUNTIME.items()}
+    if got != expected:
+        raise ValueError(f"unpacked AMX mysql dests {got} != {expected}")
+    for off in LAIRD_MYSQL_FORMAT_SIZE_OFFS:
+        size = struct.unpack_from("<i", data, cod + off)[0]
+        if size != 64:
+            raise ValueError(f"format size at {off} is {size}, want 64")
+    op = struct.unpack_from("<i", data, cod + LAIRD_MYSQL_PASSWORD_FORMAT_PUSH)[0]
+    tgt = struct.unpack_from("<i", data, cod + LAIRD_MYSQL_PASSWORD_FORMAT_PUSH + 4)[0]
+    if op != OP_JUMP or tgt != LAIRD_MYSQL_AFTER_PASSWORD_FORMAT:
+        raise ValueError(f"password format skip mismatch op={op} tgt={tgt}")
+    settings_name = _read_packed_string(data, dat + LAIRD_SETTINGS_PACKED_DAT, 32)
+    if settings_name != LAIRD_SETTINGS_NAME:
+        raise ValueError(f"settings filename clobbered: {settings_name!r}")
 
 
 AMX_COMPACTMARGIN = 4
@@ -548,10 +629,17 @@ def build_laird(root: Path, ini: Path, start: bool) -> int:
     out_buf = bytearray(patched)
     out_main.write_bytes(out_buf)
     verify_amx(out_main)
+    verify_unpacked_mysql_amx(out_main, cp)
     out_gm.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(out_main, out_gm)
     print(f"OK: profile={profile.name} source={source.name}")
     print(f"OK: {out_main.name} ({len(out_buf)} bytes, branding={branding})")
+    print(
+        "OK: mysql "
+        f"{cp['mysql']['user'].strip()}@{cp['mysql']['host'].strip()}/"
+        f"{cp['mysql']['database'].strip()} port={cp['mysql'].get('port', '3306').strip()} "
+        f"password_len={len(cp['mysql']['password'].strip())}"
+    )
     print(f"OK: gamemodes/{out_gm.name}")
     if not start:
         return 0

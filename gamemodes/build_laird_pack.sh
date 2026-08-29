@@ -185,10 +185,22 @@ set -e
 if rg -q "Loaded 7 plugins" server_log.txt 2>/dev/null \
    && ! rg -q "Run time error 19|Run time error 17|License .* rejected" server_log.txt 2>/dev/null \
    && rg -q "LAIRD_SYSTEM" server_log.txt 2>/dev/null; then
-  echo "SMOKE OK"
+  echo "SMOKE PLUGINS OK"
 else
   echo "SMOKE FAIL:"; rg "error|License|FAIL|Unable" server_log.txt 2>/dev/null || tail -20 server_log.txt
   exit 1
+fi
+if mysql -h 127.0.0.1 -u gs351646 -p'9Jiqkof3vh0x' gs351646 -e "SELECT 1;" >/dev/null 2>&1; then
+  if rg -q "Не удалось подключится к базе данных" server_log.txt \
+     || rg -q "error #1045|Access denied" mysql_log.txt 2>/dev/null \
+     || rg -q "error #2006" mysql_log.txt 2>/dev/null; then
+    echo "SMOKE MYSQL FAIL"
+    rg "подключ|2006|1045|vehicle models" server_log.txt mysql_log.txt 2>/dev/null | head -40
+    exit 1
+  fi
+  echo "SMOKE MYSQL OK"
+else
+  echo "WARN: local MySQL gs351646 not available, skip auth smoke"
 fi
 rm -f server_log.txt svlog.txt mysql_log.txt
 
@@ -240,7 +252,9 @@ server.cfg:
   ./samp03svr
 
 Если в логе «Не удалось подключится к базе данных» / errno 2006:
-  база не импортирована или MySQL недоступен — сначала ./check_db.sh
+  1) ./check_db.sh — логин/пароль панели должны быть gs351646 / 9Jiqkof3vh0x
+  2) импорт database/server_clean.sql в базу gs351646
+  3) MySQL должен слушать 127.0.0.1:3306 (не путать с портом игры 5049)
 EOF
 
 cat > "$PACK/check_db.sh" <<'EOF'
