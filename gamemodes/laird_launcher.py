@@ -165,6 +165,10 @@ PROFILE_LAIRD = AmxProfile(
     branding_min_offset=18_000_000,
 )
 
+# Runtime string block wiped by compact→unpacked rebuild; must be copied from source AMX.
+LAIRD_RUNTIME_BLOCK_START = 18_191_471
+LAIRD_RUNTIME_BLOCK_SIZE = 600
+
 PROFILE_BR_BONUS = AmxProfile(
     name="br_bonus",
     mysql_offsets={
@@ -224,17 +228,35 @@ def apply_mysql(buf: bytearray, cp: configparser.ConfigParser, profile: AmxProfi
         MYSQL_LIMITS["host"],
         "mysql.host",
     )
-    for key, label in (("user", "mysql.user"), ("password", "mysql.password"), ("database", "mysql.database")):
+    for key, label in (("user", "mysql.user"), ("database", "mysql.database")):
         value = sec[key].strip()
         encoded = encode_obfuscated(value)
-        if len(encoded) > MYSQL_LIMITS[key if key != "database" else "database"]:
+        limit = MYSQL_LIMITS["database" if key == "database" else key]
+        if len(encoded) > limit:
             raise ValueError(f"mysql.{key} too long for AMX tail slot")
         patch_fixed_string(
             buf,
             profile.mysql_offsets[key],
             encoded,
-            MYSQL_LIMITS["database" if key == "database" else key],
+            limit,
             label,
+        )
+    password = sec["password"].strip()
+    pass_encoded = encode_obfuscated(password)
+    pass_off = profile.mysql_offsets["password"]
+    if len(pass_encoded) > MYSQL_LIMITS["password"]:
+        print(
+            f"WARN: mysql.password tail slot fits {MYSQL_LIMITS['password']} bytes obf, "
+            f"got {len(pass_encoded)} — using packed password only",
+            file=sys.stderr,
+        )
+    else:
+        patch_fixed_string(
+            buf,
+            pass_off,
+            pass_encoded,
+            MYSQL_LIMITS["password"],
+            "mysql.password",
         )
     charset_off = profile.mysql_offsets.get("charset")
     charset = sec.get("charset", "cp1251").strip()
@@ -461,6 +483,20 @@ def _patch_license_and_unpack(compact: bytes, cp: configparser.ConfigParser | No
     return bytes(out)
 
 
+def restore_runtime_string_block(source: bytes, out: bytearray, profile: AmxProfile) -> None:
+    """Copy mysql/settings filename strings erased during license unpack."""
+    if profile.name != "laird":
+        return
+    start = LAIRD_RUNTIME_BLOCK_START
+    end = start + LAIRD_RUNTIME_BLOCK_SIZE
+    if end > len(source) or end > len(out):
+        raise ValueError(
+            f"runtime string block {start}:{end} out of range "
+            f"(source={len(source)}, out={len(out)})"
+        )
+    out[start:end] = source[start:end]
+
+
 def find_source_amx(sources: Path) -> Path:
     if not sources.is_dir():
         raise FileNotFoundError(f"Sources folder not found: {sources}")
@@ -483,12 +519,15 @@ def build_laird(root: Path, ini: Path, start: bool) -> int:
     profile = detect_profile(buf)
     branding = apply_branding(buf, cp, profile)
     patched = _patch_license_and_unpack(bytes(buf), cp, profile)
-    out_main.write_bytes(patched)
+    out_buf = bytearray(patched)
+    restore_runtime_string_block(bytes(buf), out_buf, profile)
+    apply_mysql(out_buf, cp, profile)
+    out_main.write_bytes(out_buf)
     verify_amx(out_main)
     out_gm.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(out_main, out_gm)
     print(f"OK: profile={profile.name} source={source.name}")
-    print(f"OK: {out_main.name} ({len(patched)} bytes, branding={branding})")
+    print(f"OK: {out_main.name} ({len(out_buf)} bytes, branding={branding})")
     print(f"OK: gamemodes/{out_gm.name}")
     if not start:
         return 0

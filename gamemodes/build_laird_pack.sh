@@ -113,7 +113,19 @@ echo "=== step 3/7 Pack layout ==="
 rm -rf "$PACK"
 mkdir -p "$PACK/gamemodes" "$PACK/plugins" "$PACK/scriptfiles" "$PACK/logs" "$PACK/database"
 touch "$PACK/scriptfiles/whitelist.ini"
-chmod 666 "$PACK/scriptfiles/whitelist.ini" 2>/dev/null || true
+cat > "$PACK/scriptfiles/laird_server_settings.ini" <<'EOF'
+donate=0
+money=0
+vip=0
+lvl=0
+nameserver=SA-MP Server
+tg=t.me/link0
+vk=vk.com/myserver01
+site=MY-SERVER.RU
+audio_url=
+chat=1
+EOF
+chmod 666 "$PACK/scriptfiles/whitelist.ini" "$PACK/scriptfiles/laird_server_settings.ini" 2>/dev/null || true
 cp "$STAGE/gamemodes/Laird.amx" "$PACK/gamemodes/Laird.amx"
 cp "$DB_CLEAN" "$PACK/database/server_clean.sql"
 rm -rf "$STAGE"
