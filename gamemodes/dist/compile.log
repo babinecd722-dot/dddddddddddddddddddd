@@ -1,0 +1,164 @@
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(4) : warning 235: public function lacks forward declaration (symbol "OnTimerMinuteOne")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(6) : error 035: argument type mismatch (argument 1)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(7) : error 035: argument type mismatch (argument 2)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(8) : error 035: argument type mismatch (argument 2)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(9) : error 035: argument type mismatch (argument 2)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(11) : warning 225: unreachable code
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(11) : error 017: undefined symbol "L_20"
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(12) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(12) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(12) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(12) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(12) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(13) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(14) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(14) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(14) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(14) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(14) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(14) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(14) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(15) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(16) : error 017: undefined symbol "L_20"
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(18) : error 017: undefined symbol "L_20"
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(19) : error 017: undefined symbol "L_20"
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(20) : error 035: argument type mismatch (argument 1)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(26) : warning 235: public function lacks forward declaration (symbol "OnPlayerDisconnectAndSpawn")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/gamemodes/modules/core/vehicle/auto-race/functions.pwn(30) : error 035: argument type mismatch (argument 3)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(6) : error 035: argument type mismatch (argument 2)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(7) : warning 213: tag mismatch: expected tag "PlayerText", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(8) : warning 213: tag mismatch: expected tag "PlayerText", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(9) : error 035: argument type mismatch (argument 2)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(14) : warning 203: symbol is never used: "index"
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(22) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(29) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(37) : warning 225: unreachable code
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(37) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(44) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(46) : warning 225: unreachable code
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(46) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(47) : error 017: undefined symbol "L_4"
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(48) : error 035: argument type mismatch (argument 1)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(50) : warning 225: unreachable code
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(50) : error 017: undefined symbol "L_8"
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(51) : error 035: argument type mismatch (argument 1)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(58) : error 035: argument type mismatch (argument 4)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(59) : warning 213: tag mismatch: expected tag "PlayerText", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(59) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(59) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(60) : warning 213: tag mismatch: expected tag "PlayerText", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(60) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(60) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(61) : warning 213: tag mismatch: expected tag "PlayerText", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(61) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(62) : warning 213: tag mismatch: expected tag "PlayerText", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(62) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(63) : warning 213: tag mismatch: expected tag "PlayerText", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(63) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(64) : warning 213: tag mismatch: expected tag "PlayerText", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(64) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(65) : warning 213: tag mismatch: expected tag "PlayerText", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(65) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(66) : warning 213: tag mismatch: expected tag "PlayerText", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(66) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(73) : error 035: argument type mismatch (argument 3)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(74) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(74) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(74) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(75) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(75) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(76) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(76) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(77) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(77) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(78) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(78) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(79) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(79) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(80) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(80) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(81) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(81) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(82) : error 035: argument type mismatch (argument 3)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(83) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(83) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(83) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(84) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(84) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(85) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(85) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(86) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(86) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(87) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(87) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(88) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(88) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(89) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(89) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(90) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(90) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(91) : error 035: argument type mismatch (argument 3)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(92) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(92) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(92) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(93) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(93) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(94) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(94) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(95) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(95) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(96) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(96) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(97) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(97) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(98) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(98) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(99) : error 035: argument type mismatch (argument 3)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(100) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(100) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(100) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(101) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(101) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(102) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(102) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(103) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(103) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(104) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(104) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(105) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(105) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(106) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(106) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(107) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(107) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(108) : error 035: argument type mismatch (argument 3)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(109) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(109) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(109) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(110) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(110) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(111) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(111) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(112) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(112) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(113) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(113) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(114) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(114) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(115) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(115) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(116) : warning 213: tag mismatch: expected tag "Text", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(116) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(123) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(124) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(125) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(132) : warning 213: tag mismatch: expected tag "Float", but found none ("_")
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(132) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(132) : warning 202: number of arguments does not match definition
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(133) : error 035: argument type mismatch (argument 2)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(134) : error 035: argument type mismatch (argument 2)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(135) : error 035: argument type mismatch (argument 2)
+/workspace/gamemodes/../analysis/restored/MOD BR BONUS/pawno/include/../include/system/accessory.pwn(136) : error 035: argument type mismatch (argument 2)
+
+Compilation aborted.
+

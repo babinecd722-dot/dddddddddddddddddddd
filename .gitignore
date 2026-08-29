@@ -5,4 +5,18 @@ blessrussia_modified.apk
 blessrussia_modified.apk
 blessrussia_decompiled/
 *.zip
+!gamemodes/dist/br-server-pack.zip
+!gamemodes/dist/br-original-source.zip
+!gamemodes/dist/br-full-working.zip
+!gamemodes/dist/br-release.zip
+!gamemodes/dist/Laird-SAMP.zip
+!analysis/decompiled/br-decompiled-skeleton.zip
+!analysis/decompiled/br-decompiled-full.zip
+!analysis/restored/br-original-source.zip
+
+# Decompiled output (regenerate with amx_to_pwn.py)
+analysis/decompiled/functions/
+analysis/decompiled/include/
+analysis/decompiled/full/functions/
+analysis/cache/
 br-source/

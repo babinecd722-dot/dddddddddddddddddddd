@@ -1,0 +1,9 @@
+MOD BR BONUS — рабочий серверный пакет (1:1 функционал)
+
+1. Распаковать в корень SA-MP / open.mp сервера
+2. gamemodes/br_gamemode.amx — ОРИГИНАЛЬНЫЙ gamemode (100% тот же функционал)
+3. Настроить gamemodes/server_config.ini (MySQL, название, ссылки)
+4. Запуск: cd gamemodes && bash start_server.sh
+
+Исходники (reference): br-original-source.zip — для правок, не для замены AMX.
+Пересборка из decompile НЕ даёт 1:1 AMX — используйте br_gamemode.amx.

@@ -1,0 +1,28 @@
+MOD BR BONUS — релизный пакет
+
+СОСТАВ:
+  gamemodes/br_gamemode.amx.bak  — оригинальный gamemode (1:1)
+  gamemodes/br_gamemode.amx      — gamemode с применённым конфигом
+  gamemodes/server_config.ini    — MySQL, название, ссылки
+  gamemodes/br_patch.py          — патчер конфига (обфусцирован)
+  gamemodes/start_server.sh      — патч + запуск сервера
+  server.cfg                     — шаблон конфигурации сервера
+
+УСТАНОВКА:
+  1. Распакуйте архив в корень SA-MP / open.mp сервера
+  2. Положите плагины: mysql, streamer, sscanf, pawnraknet, pawncmd
+  3. Отредактируйте gamemodes/server_config.ini
+  4. Запуск: cd gamemodes && bash start_server.sh
+
+ПЕРЕД КАЖДЫМ ЗАПУСКОМ start_server.sh применяет server_config.ini к AMX.
+
+РУЧНОЙ ПАТЧ (без запуска сервера):
+  cd gamemodes
+  python3 br_patch.py --source br_gamemode.amx.bak --amx br_gamemode.amx --no-backup
+
+ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ:
+  SERVER_ROOT  — корень сервера (по умолчанию: родитель gamemodes/)
+  SERVER_BIN   — бинарник (по умолчанию: $SERVER_ROOT/samp03svr)
+
+ТРЕБОВАНИЯ:
+  Python 3.8+, MySQL, плагины SA-MP/open.mp

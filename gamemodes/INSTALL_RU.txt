@@ -1,0 +1,47 @@
+Black Russia / BR BONUS — установка на сервер
+==============================================
+
+Содержимое пакета
+-----------------
+  gamemodes/br_gamemode.amx       — gamemode (пропатчен под server_config.ini)
+  gamemodes/br_gamemode.amx.bak   — оригинал для повторного применения конфига
+  gamemodes/server_config.ini     — настройки MySQL, название проекта, ссылки
+  gamemodes/apply_server_config.py
+  gamemodes/start_server.sh
+
+Быстрая установка
+-----------------
+1. Распакуйте архив в корень SA-MP / open.mp сервера.
+2. Откройте gamemodes/server_config.ini и измените:
+   - [mysql] — база данных
+   - [project] — название сервера (RAME RUSSIA, BR BONUS и т.д.)
+   - [links] — Telegram, VK, форум, сайт
+3. Запустите сервер одним из способов:
+
+   Вариант A — автоматически (рекомендуется):
+     chmod +x gamemodes/start_server.sh
+     ./gamemodes/start_server.sh
+
+   Вариант B — вручную перед каждым стартом:
+     cd gamemodes
+     python3 apply_server_config.py --source br_gamemode.amx.bak
+     cd ..
+     ./samp03svr
+
+4. В server.cfg укажите gamemode:
+     gamemode0 br_gamemode 1
+
+Ограничения длины строк
+-----------------------
+Строки в AMX имеют фиксированный размер. Новое значение не может быть длиннее
+оригинала. Если скрипт выдаёт ошибку — сократите текст в server_config.ini.
+
+Примеры лимитов:
+  project.name          — до 11 символов (как RAME RUSSIA)
+  project.bonus_tag     — до 7 символов (как BRBONUS)
+  links.telegram        — до длины t.me/brbonustest
+
+Почему не runtime .ini внутри AMX?
+----------------------------------
+Исходный .pwn недоступен; в скомпилированном AMX нет чтения конфига.
+Патч перед стартом — безопасный способ менять БД и брендинг без перекомпиляции.
