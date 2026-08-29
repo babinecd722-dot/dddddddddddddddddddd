@@ -112,6 +112,8 @@ python3 "$ROOT/verify_amx.py" gamemodes/Laird.amx
 echo "=== step 3/7 Pack layout ==="
 rm -rf "$PACK"
 mkdir -p "$PACK/gamemodes" "$PACK/plugins" "$PACK/scriptfiles" "$PACK/logs" "$PACK/database"
+touch "$PACK/scriptfiles/whitelist.ini"
+chmod 666 "$PACK/scriptfiles/whitelist.ini" 2>/dev/null || true
 cp "$STAGE/gamemodes/Laird.amx" "$PACK/gamemodes/Laird.amx"
 cp "$DB_CLEAN" "$PACK/database/server_clean.sql"
 rm -rf "$STAGE"
@@ -203,7 +205,7 @@ plugins json mysql sscanf streamer pawncmd pawnraknet sampvoice
 EOF
 
 cat > "$PACK/START.txt" <<EOF
-Готовый сервер — просто залить и запустить.
+Готовый сервер — залить, импорт БД, запустить.
 
 MySQL (в gamemodes/Laird.amx):
   host=127.0.0.1  port=3306  user=gs351646  db=gs351646
@@ -211,21 +213,67 @@ MySQL (в gamemodes/Laird.amx):
 server.cfg:
   bind=185.207.214.14  port=5049
 
-ОДИН РАЗ перед первым запуском:
-  mysql -h 127.0.0.1 -u gs351646 -p'9Jiqkof3vh0x' gs351646 < database/server_clean.sql
+ОБЯЗАТЕЛЬНО ПЕРЕД ПЕРВЫМ ЗАПУСКОМ — импорт базы:
+  ./setup_once.sh
+  (или phpMyAdmin: импорт database/server_clean.sql в базу gs351646)
+
+Проверка MySQL:
+  ./check_db.sh
+
+Права на папки (если whitelist.ini не пишется):
+  chmod -R 777 scriptfiles logs
 
 ЗАПУСК:
   ./samp03svr
+
+Если в логе «Не удалось подключится к базе данных» / errno 2006:
+  база не импортирована или MySQL недоступен — сначала ./check_db.sh
 EOF
+
+cat > "$PACK/check_db.sh" <<'EOF'
+#!/bin/bash
+set -e
+H=127.0.0.1
+U=gs351646
+P='9Jiqkof3vh0x'
+D=gs351646
+echo "=== MySQL check: $U@$H/$D ==="
+if mysql -h "$H" -u "$U" -p"$P" "$D" -e "SELECT 1 AS ok;" 2>/dev/null; then
+  echo "CONNECT: OK"
+  n=$(mysql -h "$H" -u "$U" -p"$P" "$D" -Nse "SHOW TABLES;" 2>/dev/null | wc -l)
+  echo "TABLES: $n"
+  if [ "$n" -lt 10 ]; then
+    echo "WARN: мало таблиц — запусти ./setup_once.sh (импорт server_clean.sql)"
+  fi
+else
+  echo "CONNECT: FAIL"
+  echo "Попробуй импорт через phpMyAdmin в панели хостинга (база gs351646)"
+  exit 1
+fi
+EOF
+chmod +x "$PACK/check_db.sh"
 
 cat > "$PACK/setup_once.sh" <<'EOF'
 #!/bin/bash
-mysql -h 127.0.0.1 -u gs351646 -p'9Jiqkof3vh0x' gs351646 < database/server_clean.sql
-echo "OK — run: ./samp03svr"
+set -e
+H=127.0.0.1
+U=gs351646
+P='9Jiqkof3vh0x'
+D=gs351646
+SQL="database/server_clean.sql"
+echo "=== Import $SQL -> $D ==="
+if ! mysql -h "$H" -u "$U" -p"$P" "$D" -e "SELECT 1;" 2>/dev/null; then
+  echo "ERROR: MySQL недоступен (127.0.0.1). Импортируй $SQL через phpMyAdmin в панели."
+  exit 1
+fi
+mysql -h "$H" -u "$U" -p"$P" "$D" < "$SQL"
+chmod -R 777 scriptfiles logs 2>/dev/null || true
+echo "OK — проверка: ./check_db.sh"
+echo "Запуск: ./samp03svr"
 EOF
 chmod +x "$PACK/setup_once.sh"
 
 rm -f "$DIST/Laird-SAMP.zip"
-(cd "$DIST" && zip -r -9 Laird-SAMP.zip Laird-SAMP)
+(cd "$DIST" && zip -r -9 Laird-SAMP.zip Laird-SAMP -x "*.DS_Store" -x "*/.DS_Store" -x "*/._*" -x "*/__MACOSX/*")
 echo "Built: $DIST/Laird-SAMP.zip ($(du -h "$DIST/Laird-SAMP.zip" | cut -f1))"
 ls -la "$PACK/gamemodes/"
