@@ -1,0 +1,726 @@
+# X-Force GTA V — отчёт по реверс-инжинирингу
+
+Дата анализа: 30 августа 2026  
+Архитектура исследованных файлов: Windows x86-64  
+Методика: статический анализ, штатная распаковка UPX, разбор PE, импортов,
+строк, xrefs и дизассемблирование критических функций. Бинарники не запускались.
+
+## 1. Краткий итог
+
+Пакет состоит из четырёх логических компонентов:
+
+1. `X-Force.exe` — launcher, авторизация и DLL-инжектор.
+2. `X-Force.dll` — основное меню для GTA V Enhanced.
+3. `X-Force_Legacy.dll` — основное меню для GTA V Legacy.
+4. `ScriptHookV.dll` — небольшой compatibility proxy для Legacy.
+
+Дополнительно X-Force загружает официальный компонент:
+
+```text
+BattlEye\BEServer_x64.dll
+```
+
+Полного BattlEye bypass в launcher нет. Реальная BE-интеграция находится в
+двух X-Force DLL: они инициализируют официальный `BEServer_x64.dll`, передают
+ему собственные callback-функции и намеренно не исполняют полученный callback
+на отключение игрока.
+
+Это позволяет подавить определённый серверный kick, когда X-Force контролирует
+интеграционный callback. Это не отключает `BEClient`, `BEService`, `BEDaisy`
+и не предотвращает account-ban, применённый удалённым BE Master.
+
+## 2. Исследованные файлы
+
+| Файл | Размер | SHA-256 |
+|---|---:|---|
+| `X-Force.exe` | 4,660,736 | `5b7f979ae2453acd4432cf48924d40bbc1ad1ce471e7572627ee14bfe8c0920c` |
+| `X-Force_Legacy.dll` | 5,273,648 | `b37d3320e18a8d1ae0e7c35ee5cd99676e32d96e15e4481f80950fcfd27283e7` |
+| `X-Force.dll` | 5,631,536 | `139454fc7200a8df18a2bec0dea964997dacdf3203081cc185fd6526cc10e6c9` |
+| `BEServer_x64.dll` | 402,216 | `b84591d8763ba845337da8926d27a2f3a74b5c3bc4e9474b9e0431295127a9d5` |
+| `ScriptHookV.dll` | 12,288 | `b83b0d06fcc987a19d0e977e9cd68a5ef47bf74777b36d1c5cd21dce71c2c26f` |
+
+Распакованные рабочие копии:
+
+| Файл | Размер после UPX | SHA-256 |
+|---|---:|---|
+| `X-Force.unpacked.exe` | 10,105,856 | `6dcfd59d1f6a20a656cfeeebd6fb6df0cab43ce1df044c38984e73a1d5fee800` |
+| `X-Force_Legacy.unpacked.dll` | 15,209,520 | `a9e663f56ab385111d2bf57395061fd64d400cefcc883c64a6769cee632f79f0` |
+| `X-Force.unpacked.dll` | 17,412,656 | `dbba4b3202beb56dec5bd03904cda38f95817c8a1ba9ab92eac8db123d69e73f` |
+
+Финальная версия Google Drive архива:
+
+```text
+Reverse.zip
+SHA-256: 067897d7155d3b9f4af161731d3db5099180f50103d9ed9a1a7cb69baacc4dc7
+```
+
+## 3. X-Force launcher
+
+### 3.1 Защита
+
+Launcher имеет два слоя:
+
+1. UPX.
+2. Секция `.vlizer` размером примерно 4.4 МБ.
+
+Переходы из обычного `.text` в `.vlizer` и VM context restore stubs
+соответствуют применению Oreans Code Virtualizer. Чувствительная управляющая
+логика виртуализирована, но инжектор, проверки привилегий и большая часть
+обвязки остаются восстанавливаемыми.
+
+PE:
+
+```text
+ImageBase: 0x140000000
+Original entry point: 0x1409B5150
+Unpacked entry point: 0x1403B4644
+Compiler/linker: MSVC 14.44
+```
+
+Оставленный PDB-путь:
+
+```text
+C:\Users\Ari\source\repos\X-Force-Group\
+gta_ee_injector\x64\Release\X-Force Ace Loader.pdb
+```
+
+### 3.2 Авторизация и backend
+
+В launcher статически включены:
+
+- `cpp-httplib`;
+- OpenSSL;
+- JSON parser;
+- HTTP endpoint `/attempt.php`;
+- поля `login`, `username`, `password`;
+- чтение локальных login data.
+
+Это клиентская часть backend. Серверная PHP/API-логика не находится в EXE.
+
+### 3.3 Выбор процесса
+
+Восстановленные имена:
+
+```text
+GTA5_Enhanced.exe
+grcWindow
+```
+
+Enhanced определяется через Toolhelp process snapshot. Legacy определяется
+через `FindWindowA("grcWindow", NULL)` и `GetWindowThreadProcessId`.
+
+Критическая функция поиска/открытия процесса:
+
+```text
+0x140153D10
+```
+
+Launcher запрашивает:
+
+```cpp
+OpenProcess(0x001FFFFF, FALSE, pid); // PROCESS_ALL_ACCESS
+```
+
+### 3.4 Выбор payload
+
+Восстановленные зашифрованные во время компиляции строки:
+
+```text
+C:\X-Folder\dll\X-Force.dll
+C:\X-Folder\dll\X-Force_Legacy.dll
+```
+
+DLL скачиваются или подготавливаются до инжекта и остаются на диске. Удаления
+после успешной загрузки launcher не выполняет.
+
+### 3.5 Инжектор
+
+Основная функция:
+
+```text
+0x1401545F0
+```
+
+Реконструированный алгоритм:
+
+```cpp
+Sleep(5000);
+
+remote = VirtualAllocEx(
+    process,
+    nullptr,
+    strlen(dll_path) + 1,
+    MEM_COMMIT | MEM_RESERVE,
+    PAGE_READWRITE
+);
+
+WriteProcessMemory(
+    process,
+    remote,
+    dll_path,
+    strlen(dll_path) + 1,
+    nullptr
+);
+
+thread = CreateRemoteThread(
+    process,
+    nullptr,
+    0,
+    LoadLibraryA,
+    remote,
+    0,
+    nullptr
+);
+```
+
+Это обычный LoadLibrary-инжект. Manual map, kernel mapper или встроенный
+драйвер в launcher не обнаружены.
+
+### 3.6 Ошибки launcher
+
+Подтверждённые дефекты:
+
+1. `OpenProcess` местами проверяется против `INVALID_HANDLE_VALUE`.
+   На ошибке `OpenProcess` возвращает `NULL`.
+2. Enhanced-ветка помечает получение handle успешным без полноценной проверки.
+3. После успешного remote thread вызывается локальный `VirtualFree(remote)`,
+   хотя remote-адрес требует `VirtualFreeEx(process, remote, 0, MEM_RELEASE)`.
+4. Launcher не ждёт завершения remote thread.
+5. Не проверяется exit code `LoadLibraryA`.
+6. При ряде ошибок остаётся remote allocation.
+7. Используется избыточный `PROCESS_ALL_ACCESS`.
+8. Пути payload жёстко зафиксированы.
+9. Успех показывается после создания thread, а не после подтверждённой загрузки
+   DLL.
+
+### 3.7 Проверка Secure Boot
+
+Функция:
+
+```text
+0x1401345A0
+```
+
+Она:
+
+1. включает `SeSystemEnvironmentPrivilege`;
+2. разрешает `NtQuerySystemEnvironmentValueEx`;
+3. разрешает `RtlGUIDFromString`;
+4. читает UEFI-переменную `SecureBoot`.
+
+Реконструкция:
+
+```cpp
+EnablePrivilege(L"SeSystemEnvironmentPrivilege");
+
+RtlGUIDFromString(
+    L"{8BE4DF61-93CA-11D2-AA0D-00E098032B8C}",
+    &efi_global_variable_guid
+);
+
+NtQuerySystemEnvironmentValueEx(
+    L"SecureBoot",
+    &efi_global_variable_guid,
+    &enabled,
+    &size,
+    nullptr
+);
+
+return enabled == 1;
+```
+
+Также launcher включает `SeDebugPrivilege`.
+
+### 3.8 Native anti-analysis thread
+
+Launcher разрешает `NtCreateThreadEx` не по имени, а через собственный hash:
+
+```text
+hash("NtCreateThreadEx") = 0xC629EAC3
+```
+
+Он создаёт suspended thread, получает и меняет его context, назначая
+`0x140132640` как новый RIP, после чего вызывает `ResumeThread`.
+
+Перед этим в `PEB->BeingDebugged` записывается `0x80`. Созданный thread
+наблюдает это поле. Это anti-analysis/anti-tamper bootstrap, а не способ
+инжекта X-Force в GTA.
+
+## 4. Основные X-Force DLL
+
+Обе DLL также упакованы UPX, но после распаковки не имеют отдельной
+виртуализированной `.vlizer`-секции. Основной cheat-код доступен для обычного
+статического анализа.
+
+### 4.1 Состав функционала
+
+Подтверждены:
+
+- собственное D3D/ImGui меню;
+- D3D hooks;
+- native invoker;
+- player, vehicle, weapon, ped и world-функции;
+- GTA script/fiber execution;
+- Lua 5.4.2;
+- ScriptHook compatibility;
+- сетевые protections;
+- обработчики kick/crash событий;
+- modder detection;
+- реакции на сетевые события и чат;
+- host-token функции;
+- relay connection;
+- telemetry blocking;
+- конфигурационные `.ini`, `.json`, `.xf`;
+- лог `C:\X-Folder\dll\X-Log.log`.
+
+Enhanced дополнительно содержит D3D12-специфичные строки:
+
+```text
+d3d12.dll
+amd_fidelityfx_dx12.dll
+```
+
+### 4.2 Различие сборок
+
+```text
+X-Force_Legacy.dll → GTA5.exe / Legacy
+X-Force.dll        → GTA5_Enhanced.exe / Enhanced
+```
+
+Legacy PDB:
+
+```text
+C:\Users\Ari\source\repos\X-Force-Group\
+gtav_ee_base\Legacy\bin\x64\Legacy only\Legacy.pdb
+```
+
+## 5. BEServer_x64.dll
+
+### 5.1 Общая информация
+
+```text
+ImageBase: 0x180000000
+Entry point: 0x180024A74
+GetVer: 0x18001A520
+Init:   0x18001A530
+```
+
+Экспорты:
+
+```text
+GetVer
+Init
+```
+
+`GetVer()`:
+
+```cpp
+uint32_t GetVer()
+{
+    return 0xDC; // 220
+}
+```
+
+Файл содержит Authenticode certificate blob с именем
+`BattlEye Innovations e.K.`. Статически подтверждено наличие подписи и
+сертификата; полная криптографическая проверка цепочки в этом анализе не
+выполнялась.
+
+### 5.2 Сетевая часть
+
+Строки BEServer подтверждают соединение с BE Master:
+
+```text
+%s-s%u.battleye.com
+Failed to send to BE Master
+Failed to start connecting to BE Master
+Failed to resolve BE Master DNS name(s)
+Failed to receive from BE Master
+```
+
+Также присутствуют:
+
+```text
+SEND #%u, %zu, %u
+KICK #%u, %zu, %s
+Bad Packet
+Invalid GUID
+Verified GUID
+Ban check timed out
+Client not responding
+Game restart required
+Update successfully completed
+bans.txt
+```
+
+Следовательно, это настоящий server-side BattlEye runtime, а не заглушка,
+встроенная разработчиками X-Force.
+
+### 5.3 ABI `Init`
+
+Фактическая форма:
+
+```cpp
+bool Init(
+    int integration_version,
+    BEGameCallbacks* game_callbacks,
+    BEServerAPI* out_api
+);
+```
+
+X-Force вызывает:
+
+```cpp
+Init(1, &callbacks, &be_api);
+```
+
+Первая структура принадлежит игре/X-Force и содержит GameID и callback’и,
+которые BEServer вызывает для взаимодействия с игрой. Вторая структура
+заполняется BEServer указателями на его API-функции.
+
+Минимальная реконструкция используемой части:
+
+```cpp
+struct BEGameCallbacks
+{
+    const char* game_id;                         // +0x00
+    void (*print_message)(const char*);           // +0x08
+    void (*kick_player)(uint64_t, const char*);   // +0x10
+    void (*send_packet)(uint64_t, void*, uint32_t); // +0x18
+};
+```
+
+Точные типы идентификатора игрока и дополнительных аргументов требуют
+runtime-трассировки, но порядок и назначение callback’ов подтверждаются
+инициализацией и их телами.
+
+## 6. BE-интеграция X-Force
+
+### 6.1 Загрузка официального модуля
+
+Обе X-Force DLL расшифровывают одну строку:
+
+```text
+BattlEye\BEServer_x64.dll
+```
+
+Затем:
+
+```cpp
+module = GetModuleHandleA("BattlEye\\BEServer_x64.dll");
+
+if (!module)
+    module = LoadLibraryA("BattlEye\\BEServer_x64.dll");
+
+init = GetProcAddress(module, "Init");
+init(1, &callbacks, &be_api);
+```
+
+### 6.2 GameID
+
+Legacy:
+
+```text
+paradise
+```
+
+Enhanced:
+
+```text
+paradiseenhanced
+```
+
+Это внутренние идентификаторы Rockstar-сборок, передаваемые BEServer.
+
+### 6.3 Адреса Legacy
+
+```text
+BE init flow:       0x18019C120
+Kick callback:      0x18019C3D0
+Packet callback:    0x18019C420
+Registered handler: 0x18019C7C0
+```
+
+Структура callback’ов:
+
+```text
+0x180DFB120 → "paradise"
+0x180DFB128 → 0x18019C3C0
+0x180DFB130 → 0x18019C3D0
+0x180DFB138 → 0x18019C420
+```
+
+### 6.4 Адреса Enhanced
+
+```text
+BE init flow:       0x18025B410
+Kick callback:      0x18025B6B0
+Packet callback:    0x18025B770
+Registered handler: 0x18025BA10
+```
+
+Структура callback’ов:
+
+```text
+0x18100C2D0 → "paradiseenhanced"
+0x18100C2D8 → 0x18022CD30
+0x18100C2E0 → 0x18025B6B0
+0x18100C2E8 → 0x18025B770
+```
+
+### 6.5 Подавление kick
+
+В обеих сборках callback, который BEServer ожидает использовать для
+отключения игрока, заменён X-Force callback’ом.
+
+Он:
+
+1. принимает идентификатор игрока и текст причины;
+2. ищет соответствующего игрока среди 32 slots;
+3. извлекает имя;
+4. показывает уведомление;
+5. возвращается без реального отключения.
+
+Формат уведомления:
+
+```text
+Prevented %s getting kicked by BattlEye. Reason: %s
+```
+
+Реконструкция:
+
+```cpp
+void xforce_be_kick_callback(uint64_t player_id, const char* reason)
+{
+    Player* player = find_player(player_id);
+
+    if (player)
+    {
+        notify(
+            "Prevented %s getting kicked by BattlEye. Reason: %s",
+            player->name(),
+            reason
+        );
+    }
+
+    // Оригинальный disconnect/kick callback не вызывается.
+}
+```
+
+Это наиболее явно подтверждённая BE-related функция X-Force.
+
+### 6.6 Packet callback
+
+Третий callback меняет регистры аргументов и переходит в внутренний
+обработчик X-Force. Обработчик:
+
+- сопоставляет BE player identifier с объектом GTA player;
+- поддерживает таблицу активных BE peers;
+- передаёт payload в функции, полученные из `BEServerAPI`;
+- регистрируется в сетевой системе X-Force под именем `"BE"`.
+
+Упрощённый поток:
+
+```text
+GTA network packet "BE"
+        │
+        ▼
+X-Force registered handler
+        │
+        ▼
+player-id / peer mapping
+        │
+        ▼
+BEServerAPI received-packet callback
+        │
+        ▼
+BEServer state machine / BE Master
+```
+
+### 6.7 Реальный охват bypass
+
+Подтверждено:
+
+- перехват server kick callback;
+- suppression локального kick action;
+- обработка server-side BE packets;
+- собственное отображение BE kick/reason;
+- контроль над GameID/callback plumbing.
+
+Не подтверждено:
+
+- отключение `BEDaisy.sys`;
+- скрытие DLL от kernel callbacks;
+- обход handle/thread/module telemetry;
+- обход integrity check `BEClient`;
+- фильтрация всех client detection reports;
+- предотвращение удалённого account-ban;
+- эмуляция BE Master.
+
+Таким образом, корректное название текущего механизма:
+
+```text
+BEServer callback interception / kick suppression
+```
+
+а не полный BattlEye bypass.
+
+## 7. ScriptHookV.dll
+
+### 7.1 Назначение
+
+Это не полноценная официальная ScriptHookV DLL. Это компактный compatibility
+proxy размером 12 КБ.
+
+PDB:
+
+```text
+C:\GTA MODS\ScriptHookV\x64\Release\ScriptHookV.pdb
+```
+
+Файл экспортирует 22 стандартные ScriptHookV-функции, включая:
+
+```text
+scriptRegister
+scriptUnregister
+scriptWait
+nativeInit
+nativePush64
+nativeCall
+getGameVersion
+getGlobalPtr
+keyboardHandlerRegister
+presentCallbackRegister
+worldGetAllPeds
+worldGetAllVehicles
+worldGetAllObjects
+worldGetAllPickups
+```
+
+### 7.2 Forwarding
+
+Практически каждый экспорт — короткий indirect jump в таблицу:
+
+```asm
+jmp qword ptr [function_table + index * 8]
+```
+
+При инициализации proxy заполняет таблицу через специальную схему:
+
+```cpp
+for (uintptr_t index = 0; index < 22; ++index)
+{
+    function_table[index] =
+        GetProcAddress(
+            reinterpret_cast<HMODULE>(index),
+            "get_shv_functions_42069"
+        );
+}
+```
+
+Обычный Windows `GetProcAddress` не принимает `HMODULE` от 0 до 21. Схема
+работает потому, что Legacy X-Force перехватывает этот вызов.
+
+Handler Legacy:
+
+```text
+0x1802B6D20
+```
+
+Он:
+
+1. сравнивает имя с `get_shv_functions_42069`;
+2. проверяет индекс `0..21`;
+3. выбирает адрес реализации из jump table;
+4. возвращает указатель X-Force;
+5. для обычных имён переходит к нормальному resolver.
+
+Magic string обнаружена только в Legacy DLL. Следовательно, этот
+`ScriptHookV.dll` предназначен прежде всего для Legacy compatibility.
+
+## 8. Риск и устойчивость текущей архитектуры
+
+### 8.1 Loader
+
+Слабые места:
+
+- легко обнаруживаемый `CreateRemoteThread(LoadLibraryA)`;
+- DLL постоянно находится на диске;
+- фиксированный путь;
+- `PROCESS_ALL_ACCESS`;
+- plaintext-имена процессов и `BEService.exe`;
+- API и error strings после UPX легко восстанавливаются;
+- некорректная обработка WinAPI return values.
+
+### 8.2 BE callback layer
+
+Слабые места:
+
+- suppression находится в одном очевидном callback;
+- отсутствие вызова game disconnect легко сравнить с нормальной интеграцией;
+- строки `Prevented ... BattlEye` и `Initialized BE Server` дают сигнатуры;
+- GameID хранится в открытом виде после распаковки;
+- регистрация route `"BE"` видна статически;
+- hook не покрывает удалённые санкции BE Master;
+- изменения ABI BEServer могут сломать структуру callback’ов.
+
+### 8.3 ScriptHook proxy
+
+Слабые места:
+
+- необычные fake `HMODULE` значения `0..21`;
+- уникальная строка `get_shv_functions_42069`;
+- все exports указывают на соседние jump-stubs;
+- отсутствие цифровой подписи;
+- очень маленький размер относительно полноценного ScriptHookV.
+
+## 9. Приоритеты дальнейшего реверса
+
+1. Полностью именовать `BEServerAPI`, который заполняется `Init`.
+2. Сопоставить каждое поле output table с обработчиками:
+   player add/remove, received packet, run frame, command и shutdown.
+3. Восстановить формат GTA network route `"BE"`.
+4. Выделить player-id mapping между GTA peer и BEServer.
+5. Проверить, какие kick reason подавляются, а какие обрабатываются отдельно.
+6. Проследить `detections::auth_shellcode::request_and_run_authed_shellcode`.
+7. Разобрать telemetry block и integrity-related hooks.
+8. Сопоставить Enhanced и Legacy hook targets/pattern scanners.
+9. Провести контролируемую runtime-трассировку `BEServer!Init`:
+   - сохранить входные callback tables;
+   - сохранить output API table;
+   - трассировать каждый indirect call;
+   - логировать packet direction, player id, size и первые bytes;
+   - не изменять payload до построения полной state machine.
+10. Проверить подписи и версии всех официальных BE компонентов из конкретной
+    установки GTA.
+
+## 10. Уровень уверенности
+
+Высокая уверенность:
+
+- UPX и Code Virtualizer в launcher;
+- LoadLibrary-инжектор и его WinAPI;
+- внешние пути обеих X-Force DLL;
+- наличие полного cheat-функционала в DLL;
+- загрузка `BattlEye\BEServer_x64.dll`;
+- вызов `Init`;
+- GameID `paradise`/`paradiseenhanced`;
+- замена kick callback;
+- отсутствие реального kick в заменяющей функции;
+- архитектура ScriptHookV proxy.
+
+Средняя уверенность:
+
+- точные C++ типы всех аргументов BE callback’ов;
+- назначение каждого поля расширенной `BEServerAPI`;
+- связь части Enhanced socket-кода непосредственно с BE, поскольку DLL также
+  статически включает HTTP/OpenSSL networking.
+
+Требует runtime-подтверждения:
+
+- полный формат route `"BE"`;
+- encryption/framing конкретной GTA-сборки;
+- поведение при ответе BE Master;
+- результат удалённого ban при подавленном локальном kick;
+- актуальность ABI для других версий `BEServer_x64.dll`.
+
