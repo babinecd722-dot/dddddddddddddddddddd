@@ -723,3 +723,276 @@ Magic string обнаружена только в Legacy DLL. Следовате
 - поведение при ответе BE Master;
 - результат удалённого ban при подавленном локальном kick;
 - актуальность ABI для других версий `BEServer_x64.dll`.
+
+## 11. Аудит пользовательского пакета и patched Legacy
+
+Источник:
+
+```text
+dsdsd.zip
+SHA-256: 502d37be08bee9bd8f3bd576ccb4829c1cd7dbba2473df2688fc02c4621d6818
+```
+
+В пакете находятся:
+
+- оригинальные X-Force launcher, Legacy и Enhanced DLL;
+- `BEServer_x64.dll`, `BEClient_x64.dll`, `BEService_x64.exe`;
+- официальный `GTA5_BE.exe`;
+- BattlEye config, EULA и localization;
+- пользовательский отчёт `battleye_report — копия.md`;
+- patched Legacy `РЕЛИЗНЫЙ.dll`.
+
+X-Force launcher и три файла из `Reverse` байт-в-байт совпадают с ранее
+исследованными образцами.
+
+### 11.1 Среда из пользовательских заметок
+
+Заявленная среда:
+
+```text
+Windows 11 Pro 25H2, build 26200.9168
+AMD Ryzen 7 2700X
+NVIDIA GeForce RTX 3070
+GTA V Legacy 1.0.3889.0
+```
+
+В архиве отсутствует сам `GTA5.exe`, поэтому заявленные hash/version основного
+игрового executable независимо не проверены.
+
+Включённый `GTA5_BE.exe`:
+
+```text
+SHA-256: b1b6997c0c76351ba1051c8978acc9c41d8552a44013f85ad685ce62cfc7c265
+Machine: i386 / 32-bit launcher
+FileVersion: 1.0.0.1
+CompanyName: BattlEye Innovations
+Security directory: present
+```
+
+Он является обычным BattlEye launcher wrapper. Конфигурация:
+
+```ini
+[Launcher]
+GameID=paradise
+BasePort=61458
+64BitExe=GTA5.exe
+SilentInstall=-1
+PrivacyBox=1
+```
+
+Client/server config:
+
+```text
+GameID paradise
+MasterPort 61455
+```
+
+### 11.2 Проверка пользовательского BattlEye-отчёта
+
+Статически подтверждено:
+
+- hashes и размеры `BEClient_x64.dll` и `BEService_x64.exe`;
+- `.be0/.be1/.be2` packing layout;
+- отсутствие raw data у стандартных PE-секций;
+- высокая энтропия `.be2`;
+- наличие service/driver/update строк;
+- named pipe `\\.\pipe\BattlEye`;
+- master host patterns;
+- наличие официальных Authenticode blobs.
+
+Не может быть подтверждено из присланного архива:
+
+- заявленные per-page runtime dumps;
+- `BEDaisy_runtime.sys`;
+- kernel live dump;
+- WinDbg/KD transcript;
+- точные loaded addresses;
+- успешный `NtLoadDriver`;
+- зарегистрированные kernel callbacks;
+- доступность `\\.\BattlEye`;
+- 13 IOCTL handlers именно в этой сборке.
+
+Причина: перечисленные в отчёте `beclient_dump`, `beservice_dump`,
+`BEDaisy_runtime.sys` и `kernel_live_dump.dmp` в архив фактически не включены.
+Вложенный `BattlEye.zip` содержит только повторную копию дистрибутива.
+
+Утверждение о `%s-s%u.battleye.com`, GameID и master-протоколе применительно
+к runtime `BEClient` правдоподобно, но без заявленного dump нельзя отличить
+результат конкретной трассировки от строк из `BEServer_x64.dll`.
+
+### 11.3 Точное сравнение patched Legacy
+
+Patched файл:
+
+```text
+РЕЛИЗНЫЙ.dll
+Packed SHA-256:
+3658eafa51bceeb62aae069a803a828a77f2ea91ec8d9c711fd59cf2fd7f55dc
+
+Unpacked SHA-256:
+06eeacbcf2100344d43a6aafa729c81d2721f5286cc3c58e0aea10d4ea3a60af
+```
+
+После UPX:
+
+- размер полностью совпадает с оригиналом: `15,209,520`;
+- PE layout полностью совпадает;
+- entry point полностью совпадает: `0x18071BA20`;
+- `.rdata`, `.data`, `.pdata`, `.rsrc`, `.reloc` совпадают;
+- изменено ровно 209 bytes;
+- имеется 8 contiguous patch ranges;
+- все изменения находятся в `.text`.
+
+Полный машинный diff сохранён в:
+
+```text
+X-FORCE_LEGACY_PATCH_MANIFEST.json
+```
+
+### 11.4 Изменение инициализации BEServer
+
+Основной patch:
+
+```text
+VA 0x18019C283–0x18019C38E
+```
+
+Оригинал при уже загруженном `BEServer_x64.dll` выходил из init flow. Патч
+исправляет это поведение:
+
+```cpp
+module = GetModuleHandleA("BattlEye\\BEServer_x64.dll");
+
+if (!module)
+    module = LoadLibraryA("BattlEye\\BEServer_x64.dll");
+
+if (!module)
+    return;
+```
+
+Добавлена проверка экспортированной версии:
+
+```cpp
+get_ver = GetProcAddress(module, "GetVer");
+
+if (!get_ver || get_ver() != 220)
+    return;
+```
+
+Добавлено прямое разрешение `Init`:
+
+```cpp
+init = GetProcAddress(module, "Init");
+
+if (!init)
+    return;
+
+if (!init(1, &callbacks, &be_api))
+    return;
+```
+
+После `Init` проверяются первые семь function pointers:
+
+```cpp
+for (int i = 0; i < 7; ++i)
+{
+    if (!be_api[i])
+    {
+        if (be_api[0])
+            be_api[0]();
+
+        memset(be_api, 0, 64);
+        return;
+    }
+}
+
+be_initialized = true;
+```
+
+Сообщение `Initialized BE Server` удалено из выполняемого пути, чтобы
+освободить code space для проверок.
+
+Положительный эффект:
+
+- корректно поддерживается уже загруженный BEServer;
+- проверяется наличие `GetVer` и `Init`;
+- исключается работа с BEServer другой версии;
+- частично заполненная API table не считается успешной;
+- failed initialization не включает packet handlers.
+
+Недостатки:
+
+- жёсткая привязка к версии `220` ломает запуск после любого BE update;
+- проверяются только первые 7 entries, хотя table очищается на 64 bytes;
+- `Init` может частично заполнить table и вернуть false, но cleanup в этой
+  ветке не вызывается;
+- загруженный через `LoadLibraryA` module не освобождается при ошибке;
+- ошибка остаётся без диагностики;
+- патч полагается на свободное место внутри существующей функции.
+
+### 11.5 Отключённый BEServer вызов
+
+Второе изменение:
+
+```text
+VA: 0x18019C5DD
+Original: FF D0    call rax
+Patched:  90 90    nop; nop
+```
+
+Перед этим:
+
+```asm
+mov rax, [be_api + 0x30]
+...
+mov rcx, player_id
+call rax
+```
+
+Для GameID `paradise` поле `be_api + 0x30` указывает не на generic logging
+функцию, а на BEServer handler `0x18000F760`.
+
+По его строкам и поведению:
+
+```text
+Verified GUID (%s) of player #%u %s
+Player #%u %s - Owner BE GUID: %s
+```
+
+предыдущий вызов через `be_api + 0x28` (`0x18000F2A0`) обрабатывает обычный:
+
+```text
+Player #%u %s - BE GUID: %s
+```
+
+Следовательно, patched DLL:
+
+1. продолжает передавать packet в обычный BE GUID handler;
+2. больше не передаёт тот же packet в Owner BE GUID handler;
+3. отключает обработку/привязку owner GUID;
+4. не изменяет уже существующий X-Force kick-suppression callback.
+
+Это точное назначение двух NOP bytes.
+
+### 11.6 Оценка patched Legacy
+
+Патч состоит из двух независимых изменений:
+
+1. hardening BEServer initialization;
+2. отключение Owner BE GUID processing.
+
+Это не полный BE bypass. Не изменены:
+
+- launcher injection;
+- BEClient report path;
+- BEService IPC;
+- BEDaisy callbacks;
+- kernel telemetry;
+- BE Master account-ban path;
+- основной kick callback, потому что X-Force уже подавлял его в оригинале.
+
+Наиболее вероятный функциональный риск — peer остаётся с обычным BE GUID, но
+без Owner BE GUID association. В зависимости от remote state machine это
+может снизить часть correlation либо привести к verification timeout,
+повторной проверке или санкции со стороны master. Статический анализ не может
+определить server policy.
