@@ -355,10 +355,22 @@ DWORD FindProcess(const wchar_t* executable) {
   return pid;
 }
 
-bool FindModule(DWORD pid, const wchar_t* module_name, std::wstring* path) {
+DWORD FindBeService() {
+  const DWORD installed_name = FindProcess(L"BEService.exe");
+  return installed_name ? installed_name : FindProcess(L"BEService_x64.exe");
+}
+
+bool FindModule(DWORD pid, const wchar_t* module_name, std::wstring* path,
+                DWORD* snapshot_error) {
+  if (snapshot_error) {
+    *snapshot_error = ERROR_SUCCESS;
+  }
   const HANDLE snapshot = CreateToolhelp32Snapshot(
       TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
   if (snapshot == INVALID_HANDLE_VALUE) {
+    if (snapshot_error) {
+      *snapshot_error = GetLastError();
+    }
     return false;
   }
   MODULEENTRY32W entry{};
@@ -464,10 +476,10 @@ int wmain(int argc, wchar_t** argv) {
   Log("INFO", std::string("elevated=") + (IsElevated() ? "true" : "false"));
   LogSecureBoot();
 
-  const DWORD be_service = FindProcess(L"BEService_x64.exe");
+  const DWORD be_service = FindBeService();
   const DWORD gta = FindProcess(L"GTA5.exe");
   const DWORD gta_be = FindProcess(L"GTA5_BE.exe");
-  Log("INFO", "processes BEService_x64=" + std::to_string(be_service) +
+  Log("INFO", "processes BEService=" + std::to_string(be_service) +
                   " GTA5=" + std::to_string(gta) +
                   " GTA5_BE=" + std::to_string(gta_be));
 
@@ -521,6 +533,7 @@ int wmain(int argc, wchar_t** argv) {
   Sha256(kManagedPayloadPath, &last_managed_hash, &hash_error);
   DWORD known_gta = gta;
   bool module_seen = false;
+  bool module_scan_warning_logged = false;
   bool loader_exited = false;
   const ULONGLONG started = GetTickCount64();
   ULONGLONG last_heartbeat = 0;
@@ -547,12 +560,21 @@ int wmain(int argc, wchar_t** argv) {
                       std::to_string(current_gta));
       known_gta = current_gta;
       module_seen = false;
+      module_scan_warning_logged = false;
     }
     if (known_gta && !module_seen) {
       std::wstring module_path;
-      if (FindModule(known_gta, L"X-Force_Custom.dll", &module_path)) {
+      DWORD module_scan_error = ERROR_SUCCESS;
+      if (FindModule(known_gta, L"X-Force_Custom.dll", &module_path,
+                     &module_scan_error)) {
         module_seen = true;
         Log("INFO", "custom module loaded: " + Narrow(module_path));
+      } else if (module_scan_error != ERROR_SUCCESS &&
+                 !module_scan_warning_logged) {
+        module_scan_warning_logged = true;
+        Log("WARN", "GTA module enumeration unavailable: " +
+                        WinError(module_scan_error) +
+                        "; X-Force internal Init/Hooking logs are authoritative");
       }
     }
 
@@ -582,7 +604,7 @@ int wmain(int argc, wchar_t** argv) {
               " gta_pid=" + std::to_string(known_gta) +
               " module_seen=" + (module_seen ? "true" : "false") +
               " be_service_pid=" +
-              std::to_string(FindProcess(L"BEService_x64.exe")));
+              std::to_string(FindBeService()));
     }
   }
 
@@ -593,5 +615,5 @@ int wmain(int argc, wchar_t** argv) {
   CloseHandle(process.hProcess);
   Log("INFO", "diagnostic session finished");
   CloseHandle(g_log);
-  return module_seen ? 0 : 5;
+  return (module_seen || module_scan_warning_logged) ? 0 : 5;
 }

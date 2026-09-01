@@ -86,7 +86,7 @@ For the first Windows/GTA test:
 The diagnostic launcher records:
 
 - Windows build, elevation, and Secure Boot state;
-- BEService, GTA5 and GTA5_BE process IDs;
+- `BEService.exe`/`BEService_x64.exe`, GTA5 and GTA5_BE process IDs;
 - SHA-256 and PE preflight validation;
 - loader PID, exit status, and a separately visible interactive console;
 - periodic process/module heartbeats;
@@ -99,6 +99,11 @@ X-Force uses Win32 console screen-buffer APIs and `_getch`, so redirecting its
 stdout hides the interactive UI. The diagnostic launcher therefore opens the
 loader in a separate console. Output drawn directly into that screen buffer is
 not duplicated into the diagnostic log.
+
+If GTA blocks Toolhelp module enumeration, the diagnostic launcher emits one
+warning instead of treating `module_seen=false` as proof of injection failure.
+The internal X-Force `Pattern Scan`, `Init`, and `Hooking Result` lines are
+authoritative in that case.
 
 The production loader remains separate because full disk logging creates
 observable artifacts and changes timing. Diagnostics should not be treated as

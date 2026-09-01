@@ -1162,7 +1162,7 @@ Runtime:
 - запускает custom loader в отдельной интерактивной console;
 - сохраняет работоспособность Win32 screen-buffer API и `_getch`;
 - раз в 30 секунд пишет heartbeat;
-- отслеживает PID GTA и BEService;
+- отслеживает PID GTA, `BEService.exe` и `BEService_x64.exe`;
 - ищет `X-Force_Custom.dll` среди GTA modules;
 - фиксирует изменение server-managed Legacy DLL;
 - считает изменение custom DLL критической ошибкой;
@@ -1174,6 +1174,12 @@ loader получает отдельное видимое окно. Текст, 
 screen buffer, не копируется в diagnostic log; внутренняя X-Force диагностика
 поступает через `X-Log.log`.
 
+Runtime-тест также показал, что Toolhelp module enumeration может быть
+недоступна для GTA, несмотря на подтверждённые внутренние логи `Init done`,
+`334/334 Pattern Scan` и `122/122 Hooking Result`. Diagnostic теперь сообщает
+ошибку module enumeration отдельно и не трактует её как доказательство
+неудачного инжекта.
+
 Сессия ограничена двумя часами и может быть остановлена через `Ctrl+C`.
 
 `Collect-XForceLogs.ps1` собирает diagnostic logs и X-Log в ZIP.
@@ -1181,7 +1187,7 @@ screen buffer, не копируется в diagnostic log; внутренняя
 Diagnostic executable:
 
 ```text
-SHA-256: 28e12ca25bd2243e5493f4d292a3db0c2ab4ca134bdb32bc1204269cd0b8155f
+SHA-256: 2f17040feb107de566a7799abd50f2ad8c985cafe9cf7a5fb84ed01d035a7743
 ```
 
 Он собран MinGW x86-64 со статическим runtime, `-Werror`, stripped symbols и
@@ -1193,14 +1199,14 @@ Packed:
 
 ```text
 X-Force_Custom_Package.zip
-SHA-256: 4ce1eff818f486b920e56ba17d6665065fc40997c2f77704e75c0e354ae9aac3
+SHA-256: 75624b713510f97a5ad2b30551c985cc051813e9fe264a374af5dcc73f4362cd
 ```
 
 AV-friendly:
 
 ```text
 X-Force_Custom_AVFriendly_Package.zip
-SHA-256: c0e6f321bbbd82a3108ab107483e69784025a73e13bbed68101fe5da576d3926
+SHA-256: 739d5aef81eb45f7fe1c737b7c6b885a97dd6a30b95300ce6caa14d3f7a86949
 ```
 
 AV-friendly profile удаляет UPX, но не меняет runtime logic. Он больше по
