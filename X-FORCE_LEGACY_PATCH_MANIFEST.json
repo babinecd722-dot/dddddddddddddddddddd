@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "source": {
+    "name": "X-Force_Legacy.dll",
+    "sha256_packed": "b37d3320e18a8d1ae0e7c35ee5cd99676e32d96e15e4481f80950fcfd27283e7",
+    "sha256_unpacked": "a9e663f56ab385111d2bf57395061fd64d400cefcc883c64a6769cee632f79f0"
+  },
+  "patched": {
+    "name": "РЕЛИЗНЫЙ.dll",
+    "sha256_packed": "3658eafa51bceeb62aae069a803a828a77f2ea91ec8d9c711fd59cf2fd7f55dc",
+    "sha256_unpacked": "06eeacbcf2100344d43a6aafa729c81d2721f5286cc3c58e0aea10d4ea3a60af"
+  },
+  "image_base": "0x180000000",
+  "unpacked_size": 15209520,
+  "different_byte_count": 209,
+  "different_run_count": 8,
+  "modified_sections": [
+    ".text"
+  ],
+  "runs": [
+    {
+      "file_offset": "0x19B683",
+      "va": "0x18019C283",
+      "length": 2,
+      "original_hex": "2e01",
+      "patched_hex": "0d00"
+    },
+    {
+      "file_offset": "0x19B6A4",
+      "va": "0x18019C2A4",
+      "length": 28,
+      "original_hex": "8b033905e06ccb007e40488d0dd76ccb00e8b6f05700833dcb6ccb00",
+      "patched_hex": "c744242047657456c744242465720000488b0d1deec500488d542420"
+    },
+    {
+      "file_offset": "0x19B6C1",
+      "va": "0x18019C2C1",
+      "length": 25,
+      "original_hex": "752b488d0df6837900c705be6ccb00145d170166c705b36ccb",
+      "patched_hex": "15ba407a004885c00f84e6000000ffd03ddc0000000f85d900"
+    },
+    {
+      "file_offset": "0x19B6DB",
+      "va": "0x18019C2DB",
+      "length": 13,
+      "original_hex": "06ffe8ceef5700488d0da36ccb",
+      "patched_hex": "00c7442420496e6974c6442424"
+    },
+    {
+      "file_offset": "0x19B6E9",
+      "va": "0x18019C2E9",
+      "length": 76,
+      "original_hex": "e816f05700803da06ccb0000742a8035926ccb004f80358c6ccb00918035866ccb007d8035806ccb002980357a6ccb0017c605746ccb0000488b0db0edc500488d15616ccb00ff154b407a00",
+      "patched_hex": "488b0de8edc500488d542420ff1585407a00e935000000488b05d9edc5004885c07402ffd00f57c00f1105c8edc5000f1105d1edc5000f1105daedc5000f1105e3edc500e983000000909090"
+    },
+    {
+      "file_offset": "0x19B74F",
+      "va": "0x18019C34F",
+      "length": 32,
+      "original_hex": "488d159a528200c60573edc50001488d0dfc1fc700e857942400488b1db010cb",
+      "patched_hex": "84c07462488d0586edc50031c9b10748833800749c4883c008e2f4c6055fedc5"
+    },
+    {
+      "file_offset": "0x19B770",
+      "va": "0x18019C370",
+      "length": 31,
+      "original_hex": "488d15915282000f57c048c74424300000000041b80200000048c744243800",
+      "patched_hex": "01488b1da810cb00488d15895282000f57c00f114424200f1144243041b802"
+    },
+    {
+      "file_offset": "0x19B9DD",
+      "va": "0x18019C5DD",
+      "length": 2,
+      "original_hex": "ffd0",
+      "patched_hex": "9090"
+    }
+  ]
+}
