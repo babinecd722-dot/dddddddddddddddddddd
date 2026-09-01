@@ -1,6 +1,3 @@
-#define UNICODE
-#define _UNICODE
-
 #include <windows.h>
 #include <bcrypt.h>
 #include <tlhelp32.h>
@@ -10,6 +7,7 @@
 #include <array>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <cwchar>
 #include <filesystem>
 #include <iomanip>
@@ -33,8 +31,12 @@ constexpr wchar_t kXForceLogPath[] =
 
 constexpr char kExpectedLoaderSha256[] =
     "da54e79b4da51a5888cb811c86902538fc81b8a5ddebd2aa8877b9244f158759";
+constexpr char kExpectedUnpackedLoaderSha256[] =
+    "0ed2b434cf537b91a6476e9d59c85497a909688764879c6cb304ac50fc4671e1";
 constexpr char kExpectedPayloadSha256[] =
     "193580563965a41658ee2c91b81b0179ce7d214682f14f28c0428eb8a1327225";
+constexpr char kExpectedUnpackedPayloadSha256[] =
+    "fb87ba36faf06dd0b636bd7d3b7db314345839471a2ebc569efa5e4e6b96e6d9";
 constexpr char kExpectedScriptHookSha256[] =
     "d784301bd5dd702d5757e729c28b7e67dc2b56e9a6b33a1d965b15c1db842a13";
 
@@ -114,6 +116,10 @@ bool Sha256(const fs::path& path, std::wstring* digest, std::string* error) {
   HANDLE file = INVALID_HANDLE_VALUE;
   std::vector<UCHAR> object;
   std::vector<UCHAR> result;
+  std::vector<UCHAR> buffer(1024 * 1024);
+  DWORD object_length = 0;
+  DWORD hash_length = 0;
+  DWORD transferred = 0;
   bool success = false;
 
   NTSTATUS status = BCryptOpenAlgorithmProvider(
@@ -124,9 +130,6 @@ bool Sha256(const fs::path& path, std::wstring* digest, std::string* error) {
     goto cleanup;
   }
 
-  DWORD object_length = 0;
-  DWORD hash_length = 0;
-  DWORD transferred = 0;
   status = BCryptGetProperty(
       algorithm, BCRYPT_OBJECT_LENGTH,
       reinterpret_cast<PUCHAR>(&object_length), sizeof(object_length),
@@ -160,7 +163,6 @@ bool Sha256(const fs::path& path, std::wstring* digest, std::string* error) {
     goto cleanup;
   }
 
-  std::array<UCHAR, 1024 * 1024> buffer{};
   for (;;) {
     DWORD read = 0;
     if (!ReadFile(file, buffer.data(), static_cast<DWORD>(buffer.size()), &read,
@@ -199,7 +201,8 @@ cleanup:
   return success;
 }
 
-bool VerifyFile(const fs::path& path, const char* expected, bool required) {
+bool VerifyFile(const fs::path& path, const char* expected, bool required,
+                const char* alternate = nullptr) {
   std::error_code filesystem_error;
   if (!fs::exists(path, filesystem_error)) {
     Log(required ? "ERROR" : "WARN",
@@ -215,12 +218,14 @@ bool VerifyFile(const fs::path& path, const char* expected, bool required) {
   }
 
   const std::string actual = Narrow(digest);
-  const bool matches = expected == nullptr || actual == expected;
+  const bool matches =
+      expected == nullptr || actual == expected ||
+      (alternate != nullptr && actual == alternate);
   Log(matches ? "INFO" : "ERROR",
       "file=" + Narrow(path.wstring()) +
           " size=" + std::to_string(fs::file_size(path, filesystem_error)) +
           " sha256=" + actual +
-          (expected ? (matches ? " [EXPECTED]" : " [MISMATCH]") : ""));
+          (expected ? (matches ? " [ACCEPTED]" : " [MISMATCH]") : ""));
   return matches || !required;
 }
 
@@ -289,8 +294,11 @@ bool IsElevated() {
 void LogWindowsVersion() {
   using RtlGetVersionFn = LONG(WINAPI*)(PRTL_OSVERSIONINFOW);
   const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
-  const auto rtl_get_version = reinterpret_cast<RtlGetVersionFn>(
-      ntdll ? GetProcAddress(ntdll, "RtlGetVersion") : nullptr);
+  const FARPROC procedure =
+      ntdll ? GetProcAddress(ntdll, "RtlGetVersion") : nullptr;
+  RtlGetVersionFn rtl_get_version = nullptr;
+  static_assert(sizeof(rtl_get_version) == sizeof(procedure));
+  std::memcpy(&rtl_get_version, &procedure, sizeof(rtl_get_version));
   RTL_OSVERSIONINFOW version{};
   version.dwOSVersionInfoSize = sizeof(version);
   if (!rtl_get_version || rtl_get_version(&version) != 0) {
@@ -402,6 +410,39 @@ void AppendXForceLog(uint64_t* previous_size) {
   CloseHandle(file);
 }
 
+void DrainLoaderOutput(HANDLE pipe, std::string* pending) {
+  if (pipe == INVALID_HANDLE_VALUE) {
+    return;
+  }
+  for (;;) {
+    DWORD available = 0;
+    if (!PeekNamedPipe(pipe, nullptr, 0, nullptr, &available, nullptr) ||
+        available == 0) {
+      break;
+    }
+    std::vector<char> buffer(std::min<DWORD>(available, 64 * 1024));
+    DWORD read = 0;
+    if (!ReadFile(pipe, buffer.data(), static_cast<DWORD>(buffer.size()), &read,
+                  nullptr) ||
+        read == 0) {
+      break;
+    }
+    pending->append(buffer.data(), read);
+    for (;;) {
+      const size_t newline = pending->find('\n');
+      if (newline == std::string::npos) {
+        break;
+      }
+      std::string line = pending->substr(0, newline);
+      pending->erase(0, newline + 1);
+      if (!line.empty() && line.back() == '\r') {
+        line.pop_back();
+      }
+      Log("LOADER", line);
+    }
+  }
+}
+
 BOOL WINAPI ConsoleHandler(DWORD type) {
   if (type == CTRL_C_EVENT || type == CTRL_BREAK_EVENT ||
       type == CTRL_CLOSE_EVENT) {
@@ -448,6 +489,7 @@ int wmain(int argc, wchar_t** argv) {
                  WinError().c_str());
     return 2;
   }
+  SetHandleInformation(g_log, HANDLE_FLAG_INHERIT, 0);
 
   Log("INFO", "X-Force diagnostic session started");
   Log("INFO", "log=" + Narrow(log_path.wstring()));
@@ -463,8 +505,10 @@ int wmain(int argc, wchar_t** argv) {
                   " GTA5_BE=" + std::to_string(gta_be));
 
   bool valid = true;
-  valid &= VerifyFile(loader, kExpectedLoaderSha256, true);
-  valid &= VerifyFile(kPayloadPath, kExpectedPayloadSha256, true);
+  valid &= VerifyFile(loader, kExpectedLoaderSha256, true,
+                      kExpectedUnpackedLoaderSha256);
+  valid &= VerifyFile(kPayloadPath, kExpectedPayloadSha256, true,
+                      kExpectedUnpackedPayloadSha256);
   valid &= VerifyFile(kScriptHookPath, kExpectedScriptHookSha256, true);
   VerifyFile(kManagedPayloadPath, nullptr, false);
   valid &= ValidatePe64Dll(kPayloadPath);
@@ -478,8 +522,16 @@ int wmain(int argc, wchar_t** argv) {
   startup.cb = sizeof(startup);
   startup.dwFlags = STARTF_USESTDHANDLES;
   startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-  startup.hStdOutput = g_log;
-  startup.hStdError = g_log;
+  HANDLE loader_output_read = INVALID_HANDLE_VALUE;
+  HANDLE loader_output_write = INVALID_HANDLE_VALUE;
+  if (!CreatePipe(&loader_output_read, &loader_output_write, &security, 0)) {
+    Log("FATAL", "CreatePipe failed: " + WinError());
+    CloseHandle(g_log);
+    return 4;
+  }
+  SetHandleInformation(loader_output_read, HANDLE_FLAG_INHERIT, 0);
+  startup.hStdOutput = loader_output_write;
+  startup.hStdError = loader_output_write;
   PROCESS_INFORMATION process{};
   std::wstring command_line = Quote(loader);
   std::vector<wchar_t> mutable_command(command_line.begin(), command_line.end());
@@ -490,9 +542,12 @@ int wmain(int argc, wchar_t** argv) {
                       TRUE, CREATE_NEW_PROCESS_GROUP, nullptr,
                       directory.c_str(), &startup, &process)) {
     Log("FATAL", "CreateProcessW failed: " + WinError());
+    CloseHandle(loader_output_read);
+    CloseHandle(loader_output_write);
     CloseHandle(g_log);
     return 4;
   }
+  CloseHandle(loader_output_write);
   CloseHandle(process.hThread);
   Log("INFO", "loader pid=" + std::to_string(process.dwProcessId));
 
@@ -505,6 +560,7 @@ int wmain(int argc, wchar_t** argv) {
   DWORD known_gta = gta;
   bool module_seen = false;
   bool loader_exited = false;
+  std::string pending_loader_output;
   const ULONGLONG started = GetTickCount64();
   ULONGLONG last_heartbeat = 0;
 
@@ -516,6 +572,7 @@ int wmain(int argc, wchar_t** argv) {
     }
 
     const DWORD wait = WaitForSingleObject(process.hProcess, 1000);
+    DrainLoaderOutput(loader_output_read, &pending_loader_output);
     if (wait == WAIT_OBJECT_0 && !loader_exited) {
       DWORD exit_code = 0;
       GetExitCodeProcess(process.hProcess, &exit_code);
@@ -569,10 +626,15 @@ int wmain(int argc, wchar_t** argv) {
     }
   }
 
+  DrainLoaderOutput(loader_output_read, &pending_loader_output);
+  if (!pending_loader_output.empty()) {
+    Log("LOADER", pending_loader_output);
+  }
   AppendXForceLog(&xlog_size);
   if (!loader_exited) {
     Log("WARN", "diagnostic monitor stopped while loader is still active");
   }
+  CloseHandle(loader_output_read);
   CloseHandle(process.hProcess);
   Log("INFO", "diagnostic session finished");
   CloseHandle(g_log);

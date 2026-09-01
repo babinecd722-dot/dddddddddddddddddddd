@@ -60,7 +60,45 @@ python3 xforce/build_custom_release.py \
 ```
 
 Outputs include packed and unpacked binaries, `manifest.json`, installation
-instructions, and `X-Force_Custom_Package.zip`.
+instructions, and two packages:
+
+- `X-Force_Custom_Package.zip` — UPX-packed loader and payload;
+- `X-Force_Custom_AVFriendly_Package.zip` — identical patched runtime logic
+  without UPX.
+
+The AV-friendly profile is intended to separate generic packer detections from
+behavioral injector detections. It does not alter `OpenProcess`,
+`WriteProcessMemory`, or `CreateRemoteThread`, so a clean antivirus result
+cannot be promised.
+
+## Diagnostic run
+
+For the first Windows/GTA test:
+
+1. Install the selected package so that the custom DLL is located at
+   `C:\X-Folder\dll\X-Force_Custom.dll`.
+2. Keep `X-Force_Diagnostic.exe` beside `X-Force_Custom.exe`.
+3. Run `X-Force_Diagnostic.exe` as administrator.
+4. Start GTA V Legacy with BattlEye and enter Story Mode.
+5. Keep the diagnostic console open while reproducing the test.
+6. Stop it with `Ctrl+C`.
+7. Run `Collect-XForceLogs.ps1`.
+
+The diagnostic launcher records:
+
+- Windows build, elevation, and Secure Boot state;
+- BEService, GTA5 and GTA5_BE process IDs;
+- SHA-256 and PE preflight validation;
+- loader stdout/stderr with `LOADER` markers;
+- periodic process/module heartbeats;
+- detection of `X-Force_Custom.dll` in GTA;
+- server-managed Legacy DLL changes;
+- unexpected custom payload changes;
+- appended `C:\X-Folder\dll\X-Log.log` data.
+
+The production loader remains separate because full disk logging creates
+observable artifacts and changes timing. Diagnostics should not be treated as
+an undetected production profile.
 
 ## Remaining limitations
 

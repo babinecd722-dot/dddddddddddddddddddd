@@ -333,6 +333,31 @@ def pack(upx: Path, source: Path, destination: Path) -> None:
     run([str(upx), "--best", "--lzma", str(destination)])
 
 
+def compile_diagnostic(cxx: str, source: Path, destination: Path) -> None:
+    run(
+        [
+            cxx,
+            "-std=c++20",
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Wpedantic",
+            "-Werror",
+            "-municode",
+            "-static",
+            "-static-libgcc",
+            "-static-libstdc++",
+            "-s",
+            "-Wl,--no-insert-timestamp",
+            str(source),
+            "-o",
+            str(destination),
+            "-lbcrypt",
+            "-ladvapi32",
+        ]
+    )
+
+
 def build(args: argparse.Namespace) -> None:
     loader = args.loader.resolve()
     legacy = args.legacy.resolve()
@@ -371,9 +396,19 @@ def build(args: argparse.Namespace) -> None:
         packed_loader_output = output / "X-Force_Custom.exe"
         packed_legacy_output = output / "X-Force_Custom.dll"
         packed_scripthook_output = output / "ScriptHookV.dll"
+        av_loader_output = output / "X-Force_Custom_AVFriendly.exe"
+        av_legacy_output = output / "X-Force_Custom_AVFriendly.dll"
+        diagnostic_output = output / "X-Force_Diagnostic.exe"
         pack(upx, loader_unpacked, packed_loader_output)
         pack(upx, legacy_unpacked, packed_legacy_output)
         shutil.copy2(scripthook_work, packed_scripthook_output)
+        shutil.copy2(loader_unpacked, av_loader_output)
+        shutil.copy2(legacy_unpacked, av_legacy_output)
+        compile_diagnostic(
+            args.cxx,
+            Path(__file__).with_name("diagnostic_launcher.cpp"),
+            diagnostic_output,
+        )
 
         manifest = {
             "format": 1,
@@ -393,6 +428,9 @@ def build(args: argparse.Namespace) -> None:
                 packed_scripthook_output.name: sha256(packed_scripthook_output),
                 unpacked_loader_output.name: sha256(unpacked_loader_output),
                 unpacked_legacy_output.name: sha256(unpacked_legacy_output),
+                av_loader_output.name: sha256(av_loader_output),
+                av_legacy_output.name: sha256(av_legacy_output),
+                diagnostic_output.name: sha256(diagnostic_output),
             },
             "mutations": mutations,
         }
@@ -411,7 +449,28 @@ def build(args: argparse.Namespace) -> None:
             "the custom loader no longer injects it.\n"
             "ScriptHookV.dll must be replaced together with the custom DLL "
             "because their compatibility token was rotated.\n"
+            "Run X-Force_Diagnostic.exe instead of the loader for the first "
+            "test. It verifies hashes and captures loader/X-Log output.\n"
+            "The AVFriendly package removes UPX without changing runtime "
+            "logic; it is larger and exposes more static code.\n"
             "No undetected or ban-safety guarantee is made.\n",
+            encoding="utf-8",
+        )
+
+        collect_logs = output / "Collect-XForceLogs.ps1"
+        collect_logs.write_text(
+            "$ErrorActionPreference = 'SilentlyContinue'\n"
+            "$out = Join-Path $PSScriptRoot "
+            "('XForce_logs_' + (Get-Date -Format 'yyyyMMdd_HHmmss') + '.zip')\n"
+            "$files = @(Get-ChildItem $PSScriptRoot "
+            "-Filter 'X-Force_Diagnostic_*.log')\n"
+            "$xlog = 'C:\\X-Folder\\dll\\X-Log.log'\n"
+            "if (Test-Path $xlog) { $files += Get-Item $xlog }\n"
+            "if ($files.Count -eq 0) { "
+            "Write-Error 'No X-Force logs found'; exit 1 }\n"
+            "Compress-Archive -Path $files.FullName -DestinationPath $out "
+            "-Force\n"
+            "Write-Host \"Created $out\"\n",
             encoding="utf-8",
         )
 
@@ -426,10 +485,29 @@ def build(args: argparse.Namespace) -> None:
                 packed_scripthook_output,
                 "X-Folder/dll/ScriptHookV.dll",
             )
+            bundle.write(diagnostic_output, diagnostic_output.name)
+            bundle.write(collect_logs, collect_logs.name)
+            bundle.write(manifest_path, "manifest.json")
+            bundle.write(readme, "README.txt")
+
+        av_archive = output / "X-Force_Custom_AVFriendly_Package.zip"
+        with zipfile.ZipFile(av_archive, "w", zipfile.ZIP_DEFLATED) as bundle:
+            bundle.write(av_loader_output, "X-Force_Custom.exe")
+            bundle.write(
+                av_legacy_output,
+                "X-Folder/dll/X-Force_Custom.dll",
+            )
+            bundle.write(
+                packed_scripthook_output,
+                "X-Folder/dll/ScriptHookV.dll",
+            )
+            bundle.write(diagnostic_output, diagnostic_output.name)
+            bundle.write(collect_logs, collect_logs.name)
             bundle.write(manifest_path, "manifest.json")
             bundle.write(readme, "README.txt")
 
     print(f"built: {output / 'X-Force_Custom_Package.zip'}")
+    print(f"built: {output / 'X-Force_Custom_AVFriendly_Package.zip'}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -439,6 +517,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--scripthook", type=Path, required=True)
     parser.add_argument("--upx", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--cxx", default="x86_64-w64-mingw32-g++")
     return parser.parse_args()
 
 
