@@ -410,39 +410,6 @@ void AppendXForceLog(uint64_t* previous_size) {
   CloseHandle(file);
 }
 
-void DrainLoaderOutput(HANDLE pipe, std::string* pending) {
-  if (pipe == INVALID_HANDLE_VALUE) {
-    return;
-  }
-  for (;;) {
-    DWORD available = 0;
-    if (!PeekNamedPipe(pipe, nullptr, 0, nullptr, &available, nullptr) ||
-        available == 0) {
-      break;
-    }
-    std::vector<char> buffer(std::min<DWORD>(available, 64 * 1024));
-    DWORD read = 0;
-    if (!ReadFile(pipe, buffer.data(), static_cast<DWORD>(buffer.size()), &read,
-                  nullptr) ||
-        read == 0) {
-      break;
-    }
-    pending->append(buffer.data(), read);
-    for (;;) {
-      const size_t newline = pending->find('\n');
-      if (newline == std::string::npos) {
-        break;
-      }
-      std::string line = pending->substr(0, newline);
-      pending->erase(0, newline + 1);
-      if (!line.empty() && line.back() == '\r') {
-        line.pop_back();
-      }
-      Log("LOADER", line);
-    }
-  }
-}
-
 BOOL WINAPI ConsoleHandler(DWORD type) {
   if (type == CTRL_C_EVENT || type == CTRL_BREAK_EVENT ||
       type == CTRL_CLOSE_EVENT) {
@@ -529,18 +496,6 @@ int wmain(int argc, wchar_t** argv) {
 
   STARTUPINFOW startup{};
   startup.cb = sizeof(startup);
-  startup.dwFlags = STARTF_USESTDHANDLES;
-  startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-  HANDLE loader_output_read = INVALID_HANDLE_VALUE;
-  HANDLE loader_output_write = INVALID_HANDLE_VALUE;
-  if (!CreatePipe(&loader_output_read, &loader_output_write, &security, 0)) {
-    Log("FATAL", "CreatePipe failed: " + WinError());
-    CloseHandle(g_log);
-    return 4;
-  }
-  SetHandleInformation(loader_output_read, HANDLE_FLAG_INHERIT, 0);
-  startup.hStdOutput = loader_output_write;
-  startup.hStdError = loader_output_write;
   PROCESS_INFORMATION process{};
   std::wstring command_line = Quote(loader);
   std::vector<wchar_t> mutable_command(command_line.begin(), command_line.end());
@@ -548,17 +503,16 @@ int wmain(int argc, wchar_t** argv) {
 
   Log("INFO", "starting custom loader");
   if (!CreateProcessW(loader.c_str(), mutable_command.data(), nullptr, nullptr,
-                      TRUE, CREATE_NEW_PROCESS_GROUP, nullptr,
+                      FALSE, CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP,
+                      nullptr,
                       directory.c_str(), &startup, &process)) {
     Log("FATAL", "CreateProcessW failed: " + WinError());
-    CloseHandle(loader_output_read);
-    CloseHandle(loader_output_write);
     CloseHandle(g_log);
     return 4;
   }
-  CloseHandle(loader_output_write);
   CloseHandle(process.hThread);
-  Log("INFO", "loader pid=" + std::to_string(process.dwProcessId));
+  Log("INFO", "loader pid=" + std::to_string(process.dwProcessId) +
+                  " (interactive console opened separately)");
 
   std::wstring last_payload_hash;
   std::wstring last_managed_hash;
@@ -568,7 +522,6 @@ int wmain(int argc, wchar_t** argv) {
   DWORD known_gta = gta;
   bool module_seen = false;
   bool loader_exited = false;
-  std::string pending_loader_output;
   const ULONGLONG started = GetTickCount64();
   ULONGLONG last_heartbeat = 0;
 
@@ -580,7 +533,6 @@ int wmain(int argc, wchar_t** argv) {
     }
 
     const DWORD wait = WaitForSingleObject(process.hProcess, 1000);
-    DrainLoaderOutput(loader_output_read, &pending_loader_output);
     if (wait == WAIT_OBJECT_0 && !loader_exited) {
       DWORD exit_code = 0;
       GetExitCodeProcess(process.hProcess, &exit_code);
@@ -634,15 +586,10 @@ int wmain(int argc, wchar_t** argv) {
     }
   }
 
-  DrainLoaderOutput(loader_output_read, &pending_loader_output);
-  if (!pending_loader_output.empty()) {
-    Log("LOADER", pending_loader_output);
-  }
   AppendXForceLog(&xlog_size);
   if (!loader_exited) {
     Log("WARN", "diagnostic monitor stopped while loader is still active");
   }
-  CloseHandle(loader_output_read);
   CloseHandle(process.hProcess);
   Log("INFO", "diagnostic session finished");
   CloseHandle(g_log);

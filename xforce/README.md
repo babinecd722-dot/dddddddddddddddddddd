@@ -89,12 +89,17 @@ The diagnostic launcher records:
 - Windows build, elevation, and Secure Boot state;
 - BEService, GTA5 and GTA5_BE process IDs;
 - SHA-256 and PE preflight validation;
-- loader stdout/stderr with `LOADER` markers;
+- loader PID, exit status, and a separately visible interactive console;
 - periodic process/module heartbeats;
 - detection of `X-Force_Custom.dll` in GTA;
 - server-managed Legacy DLL changes;
 - unexpected custom payload changes;
 - appended `C:\X-Folder\dll\X-Log.log` data.
+
+X-Force uses Win32 console screen-buffer APIs and `_getch`, so redirecting its
+stdout hides the interactive UI. The diagnostic launcher therefore opens the
+loader in a separate console. Output drawn directly into that screen buffer is
+not duplicated into the diagnostic log.
 
 The production loader remains separate because full disk logging creates
 observable artifacts and changes timing. Diagnostics should not be treated as

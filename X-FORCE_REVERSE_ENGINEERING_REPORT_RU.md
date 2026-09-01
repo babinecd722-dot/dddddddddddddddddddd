@@ -1156,15 +1156,20 @@ Preflight:
 
 Runtime:
 
-- запускает custom loader;
-- перенаправляет его stdout/stderr через pipe;
-- одновременно показывает output в console и пишет строки `LOADER` в log;
+- запускает custom loader в отдельной интерактивной console;
+- сохраняет работоспособность Win32 screen-buffer API и `_getch`;
 - раз в 30 секунд пишет heartbeat;
 - отслеживает PID GTA и BEService;
 - ищет `X-Force_Custom.dll` среди GTA modules;
 - фиксирует изменение server-managed Legacy DLL;
 - считает изменение custom DLL критической ошибкой;
 - добавляет только новые данные из `C:\X-Folder\dll\X-Log.log`.
+
+Первая pipe-based версия скрывала интерфейс loader, потому что X-Force
+использует Win32 console screen buffer, а не только stdout. Это исправлено:
+loader получает отдельное видимое окно. Текст, нарисованный напрямую в его
+screen buffer, не копируется в diagnostic log; внутренняя X-Force диагностика
+поступает через `X-Log.log`.
 
 Сессия ограничена двумя часами и может быть остановлена через `Ctrl+C`.
 
@@ -1173,7 +1178,7 @@ Runtime:
 Diagnostic executable:
 
 ```text
-SHA-256: 727b55ffe021f3810d02dbaf321c04f95d9c825abaf5cbb546a15b727aebde19
+SHA-256: 5dbad382123e5188893074f1527a71e8e7a41efee2a294299b473ec4fe8ca2e9
 ```
 
 Он собран MinGW x86-64 со статическим runtime, `-Werror`, stripped symbols и
@@ -1185,14 +1190,14 @@ Packed:
 
 ```text
 X-Force_Custom_Package.zip
-SHA-256: d2edf62b842a9599f447d9b7719ac85766446dde26711fd306b2b69079c88e2d
+SHA-256: 0ac80f58f4b89df9bf6d8a5faf2863b4501a2d0b014fe50758190c36bcd05f63
 ```
 
 AV-friendly:
 
 ```text
 X-Force_Custom_AVFriendly_Package.zip
-SHA-256: 553ae192a80c736abf1759a32fd9acef4028a31f07e579e80a0aa81cffe0e9a7
+SHA-256: 36502581325f859510083c10e12d8ec1e21f402221f4b077b7d6a694cd661733
 ```
 
 AV-friendly profile удаляет UPX, но не меняет runtime logic. Он больше по
