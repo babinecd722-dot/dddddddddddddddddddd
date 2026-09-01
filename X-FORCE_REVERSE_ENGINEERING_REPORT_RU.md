@@ -1163,6 +1163,8 @@ Runtime:
 - ищет `X-Force_Custom.dll` среди GTA modules;
 - фиксирует изменение server-managed Legacy DLL;
 - считает изменение custom DLL критической ошибкой;
+- устанавливает read-only attribute на согласованный `ScriptHookV.dll`;
+- считает последующее изменение ScriptHook критической ошибкой;
 - добавляет только новые данные из `C:\X-Folder\dll\X-Log.log`.
 
 Первая pipe-based версия скрывала интерфейс loader, потому что X-Force
@@ -1178,7 +1180,7 @@ screen buffer, не копируется в diagnostic log; внутренняя
 Diagnostic executable:
 
 ```text
-SHA-256: 5dbad382123e5188893074f1527a71e8e7a41efee2a294299b473ec4fe8ca2e9
+SHA-256: 6decf19c3f3f2c4a92a55fc7f44d817b03c47c3380fc6dbf547b846b6f3a9feb
 ```
 
 Он собран MinGW x86-64 со статическим runtime, `-Werror`, stripped symbols и
@@ -1190,14 +1192,14 @@ Packed:
 
 ```text
 X-Force_Custom_Package.zip
-SHA-256: 0ac80f58f4b89df9bf6d8a5faf2863b4501a2d0b014fe50758190c36bcd05f63
+SHA-256: c79375e5c34f17882a9861a3e931b3ce43d1e853258177865ecc445fff088e54
 ```
 
 AV-friendly:
 
 ```text
 X-Force_Custom_AVFriendly_Package.zip
-SHA-256: 36502581325f859510083c10e12d8ec1e21f402221f4b077b7d6a694cd661733
+SHA-256: aa1056dc627c346b4ff3f27455ae7e007dbda629dce4c5e8a0b82c6fbc427caf
 ```
 
 AV-friendly profile удаляет UPX, но не меняет runtime logic. Он больше по

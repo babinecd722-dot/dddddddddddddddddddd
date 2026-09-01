@@ -276,6 +276,28 @@ bool ValidatePe64Dll(const fs::path& path) {
   return valid;
 }
 
+bool ProtectReadOnly(const fs::path& path) {
+  const DWORD attributes = GetFileAttributesW(path.c_str());
+  if (attributes == INVALID_FILE_ATTRIBUTES) {
+    Log("ERROR", "cannot read file attributes: " + Narrow(path.wstring()) +
+                     ": " + WinError());
+    return false;
+  }
+  if ((attributes & FILE_ATTRIBUTE_READONLY) != 0) {
+    Log("INFO", "read-only protection already active: " +
+                    Narrow(path.wstring()));
+    return true;
+  }
+  if (!SetFileAttributesW(path.c_str(),
+                          attributes | FILE_ATTRIBUTE_READONLY)) {
+    Log("ERROR", "cannot enable read-only protection: " +
+                     Narrow(path.wstring()) + ": " + WinError());
+    return false;
+  }
+  Log("INFO", "read-only protection enabled: " + Narrow(path.wstring()));
+  return true;
+}
+
 bool IsElevated() {
   HANDLE token = nullptr;
   if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) {
@@ -479,6 +501,7 @@ int wmain(int argc, wchar_t** argv) {
   valid &= VerifyFile(kScriptHookPath, kExpectedScriptHookSha256, true);
   VerifyFile(kManagedPayloadPath, nullptr, false);
   valid &= ValidatePe64Dll(kPayloadPath);
+  valid &= ProtectReadOnly(kScriptHookPath);
   if (!valid) {
     Log("FATAL", "preflight failed; loader will not be started");
     CloseHandle(g_log);
@@ -516,9 +539,11 @@ int wmain(int argc, wchar_t** argv) {
 
   std::wstring last_payload_hash;
   std::wstring last_managed_hash;
+  std::wstring last_scripthook_hash;
   std::string hash_error;
   Sha256(kPayloadPath, &last_payload_hash, &hash_error);
   Sha256(kManagedPayloadPath, &last_managed_hash, &hash_error);
+  Sha256(kScriptHookPath, &last_scripthook_hash, &hash_error);
   DWORD known_gta = gta;
   bool module_seen = false;
   bool loader_exited = false;
@@ -575,6 +600,13 @@ int wmain(int argc, wchar_t** argv) {
                         Narrow(current_hash) +
                         " (custom payload remains isolated)");
         last_managed_hash = current_hash;
+      }
+      if (Sha256(kScriptHookPath, &current_hash, &hash_error) &&
+          current_hash != last_scripthook_hash) {
+        Log("FATAL", "ScriptHook proxy changed while monitoring: " +
+                         Narrow(last_scripthook_hash) + " -> " +
+                         Narrow(current_hash));
+        last_scripthook_hash = current_hash;
       }
       Log("HEARTBEAT",
           "elapsed_ms=" + std::to_string(elapsed) +

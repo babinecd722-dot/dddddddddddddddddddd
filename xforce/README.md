@@ -94,6 +94,8 @@ The diagnostic launcher records:
 - detection of `X-Force_Custom.dll` in GTA;
 - server-managed Legacy DLL changes;
 - unexpected custom payload changes;
+- automatic read-only protection and continuous hash monitoring for the
+  matched custom `ScriptHookV.dll`;
 - appended `C:\X-Folder\dll\X-Log.log` data.
 
 X-Force uses Win32 console screen-buffer APIs and `_getch`, so redirecting its
