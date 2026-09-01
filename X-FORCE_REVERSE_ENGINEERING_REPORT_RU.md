@@ -996,3 +996,137 @@ Player #%u %s - BE GUID: %s
 может снизить часть correlation либо привести к verification timeout,
 повторной проверке или санкции со стороны master. Статический анализ не может
 определить server policy.
+
+## 12. Custom build: изоляция updater и correctness patches
+
+Добавлен воспроизводимый hash-locked builder:
+
+```text
+xforce/build_custom_release.py
+```
+
+Он принимает только три точных известных input hash и отказывается изменять
+неизвестные версии. Каждая мутация и каждый output hash записываются в
+`manifest.json`.
+
+### 12.1 Изоляция server-managed DLL
+
+Оригинальный loader инжектировал:
+
+```text
+C:\X-Folder\dll\X-Force_Legacy.dll
+```
+
+Эта DLL управляется серверным download/update flow. Custom loader теперь
+инжектирует отдельный файл:
+
+```text
+C:\X-Folder\dll\X-Force_Custom.dll
+```
+
+Изменена encrypted path source по VA `0x1404CB7D0`. Длина строки не изменилась,
+поэтому string decryptor и surrounding code не затронуты.
+
+Server updater может продолжать заменять `X-Force_Legacy.dll`, но это больше
+не меняет payload, выбранный custom loader.
+
+### 12.2 Loader correctness
+
+Обе маски `OpenProcess` изменены:
+
+```text
+Original: 0x001FFFFF (PROCESS_ALL_ACCESS)
+Custom:   0x0000043A
+```
+
+Custom mask включает необходимые для текущего injector:
+
+```text
+PROCESS_CREATE_THREAD
+PROCESS_VM_OPERATION
+PROCESS_VM_WRITE
+PROCESS_VM_READ
+PROCESS_QUERY_INFORMATION
+```
+
+Legacy failure check исправлен:
+
+```asm
+; original
+cmp rax, -1
+
+; custom
+test rax, rax
+nop
+```
+
+Успешная ветка теперь:
+
+1. ждёт remote `LoadLibraryA` thread до 10 секунд;
+2. закрывает thread handle;
+3. закрывает process handle;
+4. больше не вызывает ошибочный локальный `VirtualFree` с remote address.
+
+Remote path allocation пока остаётся в GTA process. Для корректного
+`VirtualFreeEx` после подтверждения exit code нужен больший code cave либо
+source-level rewrite.
+
+### 12.3 Legacy BEServer hardening
+
+К пользовательскому 209-byte patch добавлено:
+
+```text
+0x18019C351: failed Init → cleanup path
+0x18019C35C: validate 8 API entries instead of 7
+```
+
+Owner BE GUID suppression по `0x18019C5DD` сохранён.
+
+### 12.4 Indicator reduction
+
+В reviewed пределах изменено:
+
+- `X-Force Ace Loader` → `Runtime DLL Loader`;
+- kick notification заменена на нейтральную;
+- unused `Initialized BE Server` заменена;
+- ScriptHook bridge token синхронно изменён в Legacy и proxy;
+- CodeView/PDB paths очищены.
+
+Это уменьшает набор простых статических индикаторов, но не является
+доказательством undetected status. Поведенческие признаки
+`OpenProcess → VirtualAllocEx → WriteProcessMemory → CreateRemoteThread`
+сохраняются.
+
+### 12.5 Собранные файлы
+
+```text
+X-Force_Custom.exe
+SHA-256: da54e79b4da51a5888cb811c86902538fc81b8a5ddebd2aa8877b9244f158759
+
+X-Force_Custom.dll
+SHA-256: 193580563965a41658ee2c91b81b0179ce7d214682f14f28c0428eb8a1327225
+
+ScriptHookV.dll
+SHA-256: d784301bd5dd702d5757e729c28b7e67dc2b56e9a6b33a1d965b15c1db842a13
+
+X-Force_Custom_Package.zip
+SHA-256: f4a3b2620c55dcf21358df3948f385e7e243a81afe7e5f299f196b824669f6c1
+```
+
+UPX 5.2.0 успешно проверяет оба packed output. PE architecture и subsystem
+сохранены. Distribution ZIP проходит CRC-проверку.
+
+### 12.6 Непокрытые уровни
+
+Custom build не изменяет:
+
+- `BEClient_x64.dll`;
+- `BEService_x64.exe`;
+- `BEDaisy_x64.sys`;
+- kernel callbacks;
+- BE Master protocol и server policy;
+- account-ban decision;
+- GTA integrity/telemetry subsystems.
+
+Поэтому называть build `UNDETECTED` без runtime telemetry и длительного
+контролируемого теста технически некорректно.
