@@ -518,6 +518,15 @@ int wmain(int argc, wchar_t** argv) {
     return 3;
   }
 
+  std::error_code xlog_error;
+  uint64_t xlog_size = 0;
+  if (fs::exists(kXForceLogPath, xlog_error)) {
+    xlog_size = fs::file_size(kXForceLogPath, xlog_error);
+    if (!xlog_error) {
+      Log("INFO", "X-Log baseline offset=" + std::to_string(xlog_size));
+    }
+  }
+
   STARTUPINFOW startup{};
   startup.cb = sizeof(startup);
   startup.dwFlags = STARTF_USESTDHANDLES;
@@ -556,7 +565,6 @@ int wmain(int argc, wchar_t** argv) {
   std::string hash_error;
   Sha256(kPayloadPath, &last_payload_hash, &hash_error);
   Sha256(kManagedPayloadPath, &last_managed_hash, &hash_error);
-  uint64_t xlog_size = 0;
   DWORD known_gta = gta;
   bool module_seen = false;
   bool loader_exited = false;

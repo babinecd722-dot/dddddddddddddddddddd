@@ -1130,3 +1130,164 @@ Custom build не изменяет:
 
 Поэтому называть build `UNDETECTED` без runtime telemetry и длительного
 контролируемого теста технически некорректно.
+
+## 13. Diagnostic build и VirusTotal
+
+### 13.1 Windows diagnostic launcher
+
+Добавлен отдельный:
+
+```text
+X-Force_Diagnostic.exe
+```
+
+Он не заменяет production loader. Его задача — первый контролируемый запуск и
+сбор доказательств.
+
+Preflight:
+
+- Windows build;
+- elevation;
+- Secure Boot registry state;
+- PID `BEService_x64.exe`, `GTA5.exe`, `GTA5_BE.exe`;
+- SHA-256 loader, custom payload и ScriptHook proxy;
+- проверка x64 PE/DLL headers и entry point;
+- фиксация исходного размера `X-Log.log`.
+
+Runtime:
+
+- запускает custom loader;
+- перенаправляет его stdout/stderr через pipe;
+- одновременно показывает output в console и пишет строки `LOADER` в log;
+- раз в 30 секунд пишет heartbeat;
+- отслеживает PID GTA и BEService;
+- ищет `X-Force_Custom.dll` среди GTA modules;
+- фиксирует изменение server-managed Legacy DLL;
+- считает изменение custom DLL критической ошибкой;
+- добавляет только новые данные из `C:\X-Folder\dll\X-Log.log`.
+
+Сессия ограничена двумя часами и может быть остановлена через `Ctrl+C`.
+
+`Collect-XForceLogs.ps1` собирает diagnostic logs и X-Log в ZIP.
+
+Diagnostic executable:
+
+```text
+SHA-256: 727b55ffe021f3810d02dbaf321c04f95d9c825abaf5cbb546a15b727aebde19
+```
+
+Он собран MinGW x86-64 со статическим runtime, `-Werror`, stripped symbols и
+детерминированным PE timestamp.
+
+### 13.2 Два distribution profile
+
+Packed:
+
+```text
+X-Force_Custom_Package.zip
+SHA-256: d2edf62b842a9599f447d9b7719ac85766446dde26711fd306b2b69079c88e2d
+```
+
+AV-friendly:
+
+```text
+X-Force_Custom_AVFriendly_Package.zip
+SHA-256: 553ae192a80c736abf1759a32fd9acef4028a31f07e579e80a0aa81cffe0e9a7
+```
+
+AV-friendly profile удаляет UPX, но не меняет runtime logic. Он больше по
+размеру и открывает больше строк/кода для статического анализа.
+
+### 13.3 VirusTotal
+
+Публично проверены три loader-варианта:
+
+| Вариант | SHA-256 | Результат |
+|---|---|---:|
+| Original | `5b7f979ae2453acd4432cf48924d40bbc1ad1ce471e7572627ee14bfe8c0920c` | 35/71 |
+| Custom packed | `da54e79b4da51a5888cb811c86902538fc81b8a5ddebd2aa8877b9244f158759` | 23/71 |
+| Custom AV-friendly | `0ed2b434cf537b91a6476e9d59c85497a909688764879c6cb304ac50fc4671e1` | 22/69 |
+
+Публичные отчёты:
+
+```text
+https://www.virustotal.com/gui/file/
+5b7f979ae2453acd4432cf48924d40bbc1ad1ce471e7572627ee14bfe8c0920c
+
+https://www.virustotal.com/gui/file/
+da54e79b4da51a5888cb811c86902538fc81b8a5ddebd2aa8877b9244f158759
+
+https://www.virustotal.com/gui/file/
+0ed2b434cf537b91a6476e9d59c85497a909688764879c6cb304ac50fc4671e1
+```
+
+Original tags включали:
+
+```text
+peexe
+upx
+64bits
+detect-debug-environment
+corrupt
+```
+
+После reviewed patches число детектов снизилось на 12 engines. Удаление UPX
+дало ещё только небольшое изменение. Это показывает, что основными факторами
+остаются:
+
+- unsigned executable;
+- Code Virtualizer;
+- динамическое разрешение API;
+- anti-analysis thread;
+- `OpenProcess`;
+- `VirtualAllocEx`;
+- `WriteProcessMemory`;
+- `CreateRemoteThread(LoadLibraryA)`;
+- downloader/auth behavior.
+
+Частые generic labels:
+
+```text
+Tedy/Teddy
+Agent
+MalwareX-gen
+Wacapew ML
+Static AI suspicious/malicious
+```
+
+Некоторые engines ошибочно относят файл к miner. Статический и поведенческий
+анализ X-Force не обнаружил mining loop, pool protocol или wallet indicators.
+
+Нулевой VirusTotal score нельзя получить надёжно одними переименованиями и
+упаковкой. Технически корректные способы дальнейшего снижения false positives:
+
+1. source-level rewrite launcher без protector/packer;
+2. минимизация downloader и injector в одном процессе;
+3. цифровая подпись стабильным code-signing certificate;
+4. reproducible version metadata;
+5. отправка false-positive samples каждому vendor;
+6. исключение поведения, которое совпадает с malware injection.
+
+Последний пункт конфликтует с текущей архитектурой LoadLibrary injector,
+поэтому одновременно гарантировать нулевые AV detections и неизменённый
+injector невозможно.
+
+### 13.4 Windows VM attempt
+
+Была подготовлена официальная Windows 11 Enterprise 25H2 Evaluation ISO и
+QEMU/Docker lab.
+
+Аппаратный nested KVM на Cloud VM завершился kernel fault:
+
+```text
+kernel BUG at arch/x86/kvm/x86.c
+kvm_spurious_fault
+vmx_vcpu_create
+```
+
+Software QEMU успешно дошёл до boot, но работает примерно в десять раз
+медленнее и не предоставляет GPU. По команде пользователя установка
+остановлена.
+
+Такая VM подходит для базового PE smoke-test, но не является валидной средой
+для выводов о GTA, BEDaisy или ban/detection rate.
