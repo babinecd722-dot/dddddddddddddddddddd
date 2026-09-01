@@ -1089,8 +1089,11 @@ Owner BE GUID suppression по `0x18019C5DD` сохранён.
 - `X-Force Ace Loader` → `Runtime DLL Loader`;
 - kick notification заменена на нейтральную;
 - unused `Initialized BE Server` заменена;
-- ScriptHook bridge token синхронно изменён в Legacy и proxy;
 - CodeView/PDB paths очищены.
+
+ScriptHook bridge token оставлен оригинальным. Runtime-тест показал, что
+X-Force вызывает `resize_file()` для `ScriptHookV.dll`; read-only или
+несогласованный token ломают startup.
 
 Это уменьшает набор простых статических индикаторов, но не является
 доказательством undetected status. Поведенческие признаки
@@ -1104,13 +1107,13 @@ X-Force_Custom.exe
 SHA-256: da54e79b4da51a5888cb811c86902538fc81b8a5ddebd2aa8877b9244f158759
 
 X-Force_Custom.dll
-SHA-256: 193580563965a41658ee2c91b81b0179ce7d214682f14f28c0428eb8a1327225
+SHA-256: 7b0eafdd5e6d742a4a0e72f87b8d09dd4f9d04b5daa395bb5f767924f49d42f6
 
 ScriptHookV.dll
-SHA-256: d784301bd5dd702d5757e729c28b7e67dc2b56e9a6b33a1d965b15c1db842a13
+SHA-256: b83b0d06fcc987a19d0e977e9cd68a5ef47bf74777b36d1c5cd21dce71c2c26f
 
 X-Force_Custom_Package.zip
-SHA-256: f4a3b2620c55dcf21358df3948f385e7e243a81afe7e5f299f196b824669f6c1
+SHA-256: 4ce1eff818f486b920e56ba17d6665065fc40997c2f77704e75c0e354ae9aac3
 ```
 
 UPX 5.2.0 успешно проверяет оба packed output. PE architecture и subsystem
@@ -1163,8 +1166,6 @@ Runtime:
 - ищет `X-Force_Custom.dll` среди GTA modules;
 - фиксирует изменение server-managed Legacy DLL;
 - считает изменение custom DLL критической ошибкой;
-- устанавливает read-only attribute на согласованный `ScriptHookV.dll`;
-- считает последующее изменение ScriptHook критической ошибкой;
 - добавляет только новые данные из `C:\X-Folder\dll\X-Log.log`.
 
 Первая pipe-based версия скрывала интерфейс loader, потому что X-Force
@@ -1180,7 +1181,7 @@ screen buffer, не копируется в diagnostic log; внутренняя
 Diagnostic executable:
 
 ```text
-SHA-256: 6decf19c3f3f2c4a92a55fc7f44d817b03c47c3380fc6dbf547b846b6f3a9feb
+SHA-256: 28e12ca25bd2243e5493f4d292a3db0c2ab4ca134bdb32bc1204269cd0b8155f
 ```
 
 Он собран MinGW x86-64 со статическим runtime, `-Werror`, stripped symbols и
@@ -1192,14 +1193,14 @@ Packed:
 
 ```text
 X-Force_Custom_Package.zip
-SHA-256: c79375e5c34f17882a9861a3e931b3ce43d1e853258177865ecc445fff088e54
+SHA-256: 4ce1eff818f486b920e56ba17d6665065fc40997c2f77704e75c0e354ae9aac3
 ```
 
 AV-friendly:
 
 ```text
 X-Force_Custom_AVFriendly_Package.zip
-SHA-256: aa1056dc627c346b4ff3f27455ae7e007dbda629dce4c5e8a0b82c6fbc427caf
+SHA-256: c0e6f321bbbd82a3108ab107483e69784025a73e13bbed68101fe5da576d3926
 ```
 
 AV-friendly profile удаляет UPX, но не меняет runtime logic. Он больше по

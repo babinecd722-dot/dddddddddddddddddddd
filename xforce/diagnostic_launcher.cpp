@@ -34,11 +34,11 @@ constexpr char kExpectedLoaderSha256[] =
 constexpr char kExpectedUnpackedLoaderSha256[] =
     "0ed2b434cf537b91a6476e9d59c85497a909688764879c6cb304ac50fc4671e1";
 constexpr char kExpectedPayloadSha256[] =
-    "193580563965a41658ee2c91b81b0179ce7d214682f14f28c0428eb8a1327225";
+    "7b0eafdd5e6d742a4a0e72f87b8d09dd4f9d04b5daa395bb5f767924f49d42f6";
 constexpr char kExpectedUnpackedPayloadSha256[] =
-    "fb87ba36faf06dd0b636bd7d3b7db314345839471a2ebc569efa5e4e6b96e6d9";
+    "87878d45fdc50d00d8595493f5979abc9994e088e39276a8e0ea864a492639f3";
 constexpr char kExpectedScriptHookSha256[] =
-    "d784301bd5dd702d5757e729c28b7e67dc2b56e9a6b33a1d965b15c1db842a13";
+    "b83b0d06fcc987a19d0e977e9cd68a5ef47bf74777b36d1c5cd21dce71c2c26f";
 
 HANDLE g_log = INVALID_HANDLE_VALUE;
 volatile LONG g_stop = FALSE;
@@ -276,28 +276,6 @@ bool ValidatePe64Dll(const fs::path& path) {
   return valid;
 }
 
-bool ProtectReadOnly(const fs::path& path) {
-  const DWORD attributes = GetFileAttributesW(path.c_str());
-  if (attributes == INVALID_FILE_ATTRIBUTES) {
-    Log("ERROR", "cannot read file attributes: " + Narrow(path.wstring()) +
-                     ": " + WinError());
-    return false;
-  }
-  if ((attributes & FILE_ATTRIBUTE_READONLY) != 0) {
-    Log("INFO", "read-only protection already active: " +
-                    Narrow(path.wstring()));
-    return true;
-  }
-  if (!SetFileAttributesW(path.c_str(),
-                          attributes | FILE_ATTRIBUTE_READONLY)) {
-    Log("ERROR", "cannot enable read-only protection: " +
-                     Narrow(path.wstring()) + ": " + WinError());
-    return false;
-  }
-  Log("INFO", "read-only protection enabled: " + Narrow(path.wstring()));
-  return true;
-}
-
 bool IsElevated() {
   HANDLE token = nullptr;
   if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) {
@@ -501,7 +479,6 @@ int wmain(int argc, wchar_t** argv) {
   valid &= VerifyFile(kScriptHookPath, kExpectedScriptHookSha256, true);
   VerifyFile(kManagedPayloadPath, nullptr, false);
   valid &= ValidatePe64Dll(kPayloadPath);
-  valid &= ProtectReadOnly(kScriptHookPath);
   if (!valid) {
     Log("FATAL", "preflight failed; loader will not be started");
     CloseHandle(g_log);
@@ -539,11 +516,9 @@ int wmain(int argc, wchar_t** argv) {
 
   std::wstring last_payload_hash;
   std::wstring last_managed_hash;
-  std::wstring last_scripthook_hash;
   std::string hash_error;
   Sha256(kPayloadPath, &last_payload_hash, &hash_error);
   Sha256(kManagedPayloadPath, &last_managed_hash, &hash_error);
-  Sha256(kScriptHookPath, &last_scripthook_hash, &hash_error);
   DWORD known_gta = gta;
   bool module_seen = false;
   bool loader_exited = false;
@@ -600,13 +575,6 @@ int wmain(int argc, wchar_t** argv) {
                         Narrow(current_hash) +
                         " (custom payload remains isolated)");
         last_managed_hash = current_hash;
-      }
-      if (Sha256(kScriptHookPath, &current_hash, &hash_error) &&
-          current_hash != last_scripthook_hash) {
-        Log("FATAL", "ScriptHook proxy changed while monitoring: " +
-                         Narrow(last_scripthook_hash) + " -> " +
-                         Narrow(current_hash));
-        last_scripthook_hash = current_hash;
       }
       Log("HEARTBEAT",
           "elapsed_ms=" + std::to_string(elapsed) +

@@ -36,8 +36,6 @@ SCRIPHHOOK_SHA256 = (
 )
 
 CUSTOM_DLL_PATH = r"C:\X-Folder\dll\X-Force_Custom.dll"
-BRIDGE_TOKEN_OLD = b"get_shv_functions_42069"
-BRIDGE_TOKEN_NEW = b"runtime_api_bridge_a91f"
 
 
 def sha256(path: Path) -> str:
@@ -297,26 +295,16 @@ def patch_legacy(path: Path) -> list[dict[str, object]]:
         b"Runtime channel ready",
         "neutralize unused BE initialization signature",
     )
-    image.replace_exact(
-        BRIDGE_TOKEN_OLD,
-        BRIDGE_TOKEN_NEW,
-        "rotate ScriptHook compatibility bridge token",
-    )
     image.clear_codeview_path("clear Legacy CodeView path")
     image.save(path)
     return image.mutations
 
 
 def patch_scripthook(path: Path) -> list[dict[str, object]]:
-    image = PEImage(path)
-    image.replace_exact(
-        BRIDGE_TOKEN_OLD,
-        BRIDGE_TOKEN_NEW,
-        "match rotated Legacy compatibility bridge token",
-    )
-    image.clear_codeview_path("clear ScriptHook proxy CodeView path")
-    image.save(path)
-    return image.mutations
+    # X-Force resizes/updates this proxy during startup. Keep its exact
+    # server-distributed token and bytes to avoid a startup conflict.
+    require_hash(path, SCRIPHHOOK_SHA256, "ScriptHook proxy working copy")
+    return []
 
 
 def run(command: list[str]) -> None:
@@ -447,8 +435,8 @@ def build(args: argparse.Namespace) -> None:
             f"{CUSTOM_DLL_PATH}\n\n"
             "The server-managed X-Force_Legacy.dll may continue updating; "
             "the custom loader no longer injects it.\n"
-            "ScriptHookV.dll must be replaced together with the custom DLL "
-            "because their compatibility token was rotated.\n"
+            "Keep the original server-distributed ScriptHookV.dll. X-Force "
+            "resizes/updates this file during startup.\n"
             "Run X-Force_Diagnostic.exe instead of the loader for the first "
             "test. It verifies hashes and captures loader/X-Log output.\n"
             "The AVFriendly package removes UPX without changing runtime "

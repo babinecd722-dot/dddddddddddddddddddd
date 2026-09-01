@@ -39,14 +39,13 @@ cave or a source-level injector rewrite.
 - retains the submitted Owner BE GUID handler suppression;
 - routes failed `BEServer!Init` through API-table cleanup;
 - validates all eight `paradise` API entries instead of seven;
-- rotates the ScriptHook compatibility bridge token;
 - neutralizes two obvious notification strings;
 - clears the CodeView path.
 
 ### ScriptHook proxy
 
-- rotates the compatibility bridge token to match the custom Legacy payload;
-- clears the CodeView path.
+- remains byte-for-byte identical to the server-distributed file;
+- is allowed to be resized/updated by the existing X-Force startup flow.
 
 ## Build
 
@@ -94,8 +93,6 @@ The diagnostic launcher records:
 - detection of `X-Force_Custom.dll` in GTA;
 - server-managed Legacy DLL changes;
 - unexpected custom payload changes;
-- automatic read-only protection and continuous hash monitoring for the
-  matched custom `ScriptHookV.dll`;
 - appended `C:\X-Folder\dll\X-Log.log` data.
 
 X-Force uses Win32 console screen-buffer APIs and `_getch`, so redirecting its
