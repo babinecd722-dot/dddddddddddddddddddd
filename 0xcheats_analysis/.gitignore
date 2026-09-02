@@ -1,0 +1,10 @@
+# Large binaries — keep locally, not in git
+gta5_launcher.exe
+eXGGxmD8lRw1.exe
+*_unpacked_mem.bin
+unpacked_sections.bin
+memdump/
+*.log
+attempt*.bin
+0xcheats_sample.bin
+vt_*.png

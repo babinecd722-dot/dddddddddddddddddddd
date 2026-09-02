@@ -1,0 +1,144 @@
+{
+  "sha256": "7200c8af008d1295c90950c2e63d410cb04c5c755ee33b8284136852f684d521",
+  "md5": "bef37b2d8c7dadff2fbea3e83a2083d7",
+  "size": 5939435,
+  "compile": "2026-09-01T06:48:40+00:00",
+  "machine": "0x8664",
+  "subsystem": 2,
+  "signed": false,
+  "entry_rva": "0x4efc2a",
+  "image_base": "0x140000000",
+  "sections": [
+    {
+      "name": ".text",
+      "vsize": 2892895,
+      "rawsize": 0,
+      "entropy": 0,
+      "hash16": "e3b0c44298fc1c14"
+    },
+    {
+      "name": ".rdata",
+      "vsize": 201018,
+      "rawsize": 0,
+      "entropy": 0,
+      "hash16": "e3b0c44298fc1c14"
+    },
+    {
+      "name": ".data",
+      "vsize": 235696,
+      "rawsize": 0,
+      "entropy": 0,
+      "hash16": "e3b0c44298fc1c14"
+    },
+    {
+      "name": ".pdata",
+      "vsize": 28452,
+      "rawsize": 0,
+      "entropy": 0,
+      "hash16": "e3b0c44298fc1c14"
+    },
+    {
+      "name": ".Lzl0",
+      "vsize": 1795275,
+      "rawsize": 0,
+      "entropy": 0,
+      "hash16": "e3b0c44298fc1c14"
+    },
+    {
+      "name": ".Lzl1",
+      "vsize": 4206428,
+      "rawsize": 4206592,
+      "entropy": 7.838,
+      "hash16": "f24253c80cb9e4d4"
+    },
+    {
+      "name": ".reloc",
+      "vsize": 224,
+      "rawsize": 512,
+      "entropy": 2.15,
+      "hash16": "9f0528f5fd4ad739"
+    },
+    {
+      "name": ".rsrc",
+      "vsize": 469,
+      "rawsize": 512,
+      "entropy": 4.704,
+      "hash16": "65afb4c90cac485d"
+    }
+  ],
+  "suspicious_imports": [
+    "KERNEL32.dll!CreateRemoteThread",
+    "KERNEL32.dll!ResumeThread",
+    "KERNEL32.dll!CreateProcessA",
+    "KERNEL32.dll!OpenProcess",
+    "KERNEL32.dll!VirtualAllocEx",
+    "KERNEL32.dll!VirtualProtectEx",
+    "KERNEL32.dll!ReadProcessMemory",
+    "KERNEL32.dll!WriteProcessMemory",
+    "KERNEL32.dll!GetSystemDefaultUILanguage",
+    "KERNEL32.dll!SystemTimeToFileTime",
+    "KERNEL32.dll!GetSystemDirectoryA",
+    "KERNEL32.dll!GetSystemTimeAsFileTime",
+    "KERNEL32.dll!GetSystemInfo",
+    "KERNEL32.dll!DeviceIoControl",
+    "KERNEL32.dll!LoadLibraryExA",
+    "KERNEL32.dll!Process32Next",
+    "KERNEL32.dll!Process32First",
+    "KERNEL32.dll!CreateToolhelp32Snapshot",
+    "KERNEL32.dll!LoadLibraryA",
+    "KERNEL32.dll!GetProcAddress",
+    "USER32.dll!GetClipboardData",
+    "ADVAPI32.dll!RegSetValueExA",
+    "ADVAPI32.dll!OpenProcessToken",
+    "ADVAPI32.dll!RegSetValueExW",
+    "SHELL32.dll!ShellExecuteA",
+    "WS2_32.dll!WSASendTo",
+    "WS2_32.dll!WSARecvFrom",
+    "WS2_32.dll!WSAStartup",
+    "ntdll.dll!NtQuerySystemInformation",
+    "ESENT.dll!JetSetSystemParameterA",
+    "api-ms-win-crt-runtime-l1-1-0.dll!system",
+    "api-ms-win-crt-filesystem-l1-1-0.dll!_wremove",
+    "api-ms-win-crt-filesystem-l1-1-0.dll!_unlock_file",
+    "api-ms-win-crt-filesystem-l1-1-0.dll!_lock_file",
+    "KERNEL32.dll!LoadLibraryA",
+    "KERNEL32.dll!GetProcAddress"
+  ],
+  "import_count": 482,
+  "string_hits": {
+    "token": [
+      "CheckTokenMembership",
+      "AdjustTokenPrivileges",
+      "OpenProcessToken"
+    ],
+    "api": [
+      "api-ms-win-crt-stdio-l1-1-0.dll",
+      "kapi-ms-win-crt-convert-l1-1-0.dll",
+      "api-ms-win-crt-heap-l1-1-0.dll",
+      "api-ms-win-crt-environment-l1-1-0.dll",
+      "+api-ms-win-crt-filesystem-l1-1-0.dll",
+      "ADVAPI32.dll",
+      "api-ms-win-crt-utility-l1-1-0.dll",
+      "api-ms-win-crt-math-l1-1-0.dll"
+    ],
+    "ace": [
+      "?_Getcat@?$codecvt@DDU_Mbstatet@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z",
+      "GetDiskFreeSpaceExA",
+      "isspace",
+      "!zpACE"
+    ],
+    "kernel": [
+      "BKERNEL32.dll"
+    ],
+    "vmp": [
+      "(0VmPj"
+    ],
+    "upx": [
+      "nB4UPX"
+    ],
+    ".be": [
+      ".BEJM."
+    ]
+  },
+  "total_strings": 9536
+}

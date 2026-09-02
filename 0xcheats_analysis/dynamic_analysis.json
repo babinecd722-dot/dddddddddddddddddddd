@@ -1,0 +1,62 @@
+{
+  "sample": "gta5_launcher.exe",
+  "sha256": "7200c8af008d1295c90950c2e63d410cb04c5c755ee33b8284136852f684d521",
+  "unpacked_via": "Wine+Xvfb memory dump after 18s runtime",
+  "unpacked_sections_sha256": "ce565cbc986843084d04664025be2a75da36b29c30b9b64d61318781de26988b",
+  "unpack_success": true,
+  "self_copy_behavior": {
+    "description": "Launcher copies itself to random 14-char alphanumeric .exe name in same directory",
+    "examples": ["eXGGxmD8lRw1.exe", "eGyc2jY3FloR.exe", "Mf7PANZSmIu9Zy.exe", "RJR74Os3GV.exe"],
+    "hash_unchanged": true
+  },
+  "bypass_architecture": {
+    "type": "kernel_driver_manual_map",
+    "techniques": ["kdmapper", "manual_mapper", "NtLoadDriver", "NtUnloadDriver"],
+    "device_paths": ["\\\\.\\dlknsmoh", "\\\\.\\BiosToolCommonDriver"],
+    "kernel_handler_class": "kernelmode_proc_handler",
+    "debug_strings": [
+      "failed to write image to kernel memory",
+      "called driver entry at : 0x%llx | returned : 0x%lx",
+      "driver entry returned bad ntstatus : 0x%lx | freeing image",
+      "attached to process : %ld",
+      "detached from process"
+    ]
+  },
+  "auth": {
+    "crypto": "AES-256-GCM",
+    "key_label": "aes256-gcm-key",
+    "version_string": "0xCheats-v2026",
+    "hwid_field": true,
+    "site_api_base": "https://0xcheats.net",
+    "endpoints": ["/Account/Auth", "/Account/Download", "/Account/Info", "/Account/Register", "/Account/Recovery", "/Account/Settings/ResetHwid"]
+  },
+  "supported_games": {
+    "launcher_classes": [
+      "Launcher@GTA5",
+      "Launcher@GTA5LEGACY",
+      "Launcher@RAGEMP",
+      "Launcher@Majestic",
+      "Launcher@MTASANew",
+      "Launcher@RDR2"
+    ],
+    "process_names": ["GTA5", "gta_sa"]
+  },
+  "guids": [
+    "{973F5D5C-1D90-4944-BE8E-24B94231A174}",
+    "{FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}",
+    "{F4E57C4B-2036-45F0-A9AB-443BCFE33D9F}"
+  ],
+  "evasion": {
+    "defender_path_reference": "C:\\ProgramData\\Microsoft\\Windows Defender\\Scans\\History\\Service\\DetectionHistory",
+    "anti_debug": ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "AddVectoredExceptionHandler"]
+  },
+  "malware_verdict": "cheat_loader_not_stealer",
+  "comparison_xforce": {
+    "0x_layer": "kernel (kdmapper + manual_mapper + DeviceIoControl)",
+    "xforce_layer": "usermode (WriteProcessMemory + CreateRemoteThread + signed chrome_elf helper)",
+    "0x_target_ac": "BattlEye (GTA Online / MP launchers)",
+    "xforce_target_ac": "ACE (Rockstar Enhanced)",
+    "0x_bypass_strength": "architecturally stronger for BE — kernel R/W + driver hide",
+    "xforce_bypass_strength": "usermode ACE implant only — no kernel component"
+  }
+}
