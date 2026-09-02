@@ -124,6 +124,76 @@ Runtime effectiveness (ban rate, detection) — **unknown without live test**.
 
 ---
 
+## Windows 11 25H2 / HVCI (Memory Integrity) — Verified
+
+### User report
+> On Windows 25H2 the cheat doesn't launch; you need to disable kernel integrity in Defender.
+
+**Verdict: technically correct and expected** for this loader architecture.
+
+### Why (from unpacked binary + public kdmapper docs)
+
+0xCheats uses **kdmapper + manual_mapper** to load an unsigned kernel driver. This is fundamentally incompatible with **HVCI / Memory Integrity** (Изоляция ядра → Целостность памяти):
+
+| Protection | Effect on 0xCheats |
+|---|---|
+| **HVCI (Memory Integrity)** | Blocks unsigned/vulnerable driver mapping; `failed to write image to kernel memory` |
+| **Vulnerable Driver Blocklist** | Blocks `BiosToolCommonDriver` and similar BYOVD primitives used by kdmapper |
+| **PatchGuard (25H2 hardened)** | BSOD on kernel structure tampering if mapper partially succeeds |
+| **25H2 default security** | More PCs ship with VBS/HVCI enabled; Microsoft pushes stricter CI stack |
+
+kdmapper author (TheCruZ) explicitly states: *"HVCI is specifically designed to prevent execution of code on non-executable pages... kdmapper don't bypass it and probably will never bypass it unless some exploit appears"* ([kdmapper#172](https://github.com/TheCruZ/kdmapper/issues/172)).
+
+### Binary evidence
+
+| Finding | Meaning |
+|---|---|
+| `(kdmapper)` + `(manual_mapper)` debug tags | Dual mapper path for unsigned driver |
+| `\\.\BiosToolCommonDriver` | Vulnerable-driver IOCTL primitive (BYOVD) |
+| `failed to write image to kernel memory` | Typical HVCI-blocked failure |
+| `failed to unload drv : 0x%lx` | Driver cleanup on map failure |
+| `RtlGetVersion` + build constants **26200, 26100, 22631** | OS version branching includes **25H2/24H2** |
+| `DefenderHistory: %d` + trace cleaner | Clears Defender detection history post-run |
+| Path `...\Defender\Scans\History\Service\DetectionHistory` | Anti-forensics — expects Defender to flag the loader |
+
+### Required user actions (community + kdmapper standard)
+
+To run on 25H2, users typically must:
+
+1. **Windows Security → Device Security → Core Isolation → Memory Integrity → OFF**
+2. Reboot (mandatory)
+3. Optionally disable **Vulnerable Driver Blocklist** (often auto-enabled with HVCI)
+4. Run launcher **as Administrator**
+5. Disable/third-party AV (Defender real-time may still block mapper even with HVCI off)
+6. Some users also disable VBS entirely via registry `DeviceGuard\EnableVirtualizationBasedSecurity = 0`
+
+Official 0xCheats help page only mentions "disable antivirus + run as admin" — **does not document HVCI requirement**, but binary architecture makes it mandatory.
+
+### 25H2-specific extra pain
+
+Windows 11 **25H2 (build 26200+)** adds:
+- Stronger Kernel Patch Protection (PG bypass tools like TheiaPg target 26200 specifically)
+- More default HVCI/VBS on new installs
+- BattlEye/Vanguard ecosystem pushing attestation-based trust (HVCI as baseline)
+
+0xCheats has **build 26200 constants** in code → they know 25H2 exists, but mapper stack is still legacy kdmapper-class → **no native HVCI bypass**.
+
+### Is 0xCheats "better" overall?
+
+| Dimension | Winner | Notes |
+|---|---|---|
+| **BE bypass depth** | **0xCheats** | Kernel driver vs X-Force usermode ACE |
+| **Win 10 / old Win 11 (HVCI off)** | **0xCheats** | Works if user disables protections |
+| **Win 11 24H2/25H2 (HVCI on)** | **X-Force** | No kernel driver = no HVCI wall |
+| **Setup friction** | **X-Force** | No Memory Integrity toggle needed |
+| **Detection by Defender** | **Both bad** | 0x additionally wipes DefenderHistory traces |
+| **Game coverage** | **0xCheats** | GTA5, RAGE, FiveM, RDR2, MTA, Majestic |
+| **Stealth / OPSEC** | **X-Force** | Smaller kernel footprint, signed helper |
+
+**Bottom line:** 0xCheats is architecturally stronger for BattlEye **when HVCI is off**, but on **25H2 with default security it is worse** — users must manually cripple Windows Defender Core Isolation. X-Force avoids that entirely by staying usermode (but targets ACE, not BE).
+
+---
+
 ## Dynamic Analysis (Wine + Xvfb + Memory Dump)
 
 **Method:** Run `gta5_launcher.exe` under Wine+Xvfb for 18s, dump `/proc/PID/mem` regions at image base `0x140000000`.
