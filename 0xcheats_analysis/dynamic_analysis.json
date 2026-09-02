@@ -51,7 +51,27 @@
     "anti_debug": ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "AddVectoredExceptionHandler"]
   },
   "malware_verdict": "cheat_loader_not_stealer",
-  "comparison_xforce": {
+  "windows_25h2_hvci": {
+    "user_report_confirmed": true,
+    "issue": "Launcher fails on Win11 25H2 when Memory Integrity (HVCI) is enabled",
+    "root_cause": "kdmapper + manual_mapper cannot map unsigned driver under HVCI/VBS",
+    "required_mitigation": [
+      "Disable Memory Integrity (Core Isolation) in Windows Security",
+      "Reboot",
+      "Run as Administrator",
+      "Disable antivirus / allow launcher",
+      "Optionally disable Vulnerable Driver Blocklist and VBS"
+    ],
+    "binary_evidence": {
+      "mapper_tags": ["kdmapper", "manual_mapper"],
+      "vulnerable_driver_device": "\\\\.\\BiosToolCommonDriver",
+      "failure_strings": ["failed to write image to kernel memory", "failed to unload drv : 0x%lx"],
+      "os_build_constants": [26200, 26100, 22631, 22000, 19045],
+      "defender_trace_cleaner": true
+    },
+    "official_docs_mention_hvci": false,
+    "kdmapper_author_confirms_no_hvci_bypass": true
+  },
     "0x_layer": "kernel (kdmapper + manual_mapper + DeviceIoControl)",
     "xforce_layer": "usermode (WriteProcessMemory + CreateRemoteThread + signed chrome_elf helper)",
     "0x_target_ac": "BattlEye (GTA Online / MP launchers)",
