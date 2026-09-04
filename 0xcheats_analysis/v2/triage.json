@@ -1,0 +1,59 @@
+{
+  "sha256": "364534143ac9284939b0ecd11ce5607017ec83083597aab0ddc08d2c5c366127",
+  "md5": "7acd40247387a9b760409707ffd6eab1",
+  "size": 5705043,
+  "compile": "2026-09-01T06:48:40+00:00",
+  "entry_rva": "0x4efc2a",
+  "image_base": "0x140000000",
+  "sections": [
+    {
+      "name": ".text",
+      "vsize": 2892895,
+      "rawsize": 0,
+      "entropy": 0
+    },
+    {
+      "name": ".rdata",
+      "vsize": 201018,
+      "rawsize": 0,
+      "entropy": 0
+    },
+    {
+      "name": ".data",
+      "vsize": 235696,
+      "rawsize": 0,
+      "entropy": 0
+    },
+    {
+      "name": ".pdata",
+      "vsize": 28452,
+      "rawsize": 0,
+      "entropy": 0
+    },
+    {
+      "name": ".Lzl0",
+      "vsize": 1795275,
+      "rawsize": 0,
+      "entropy": 0
+    },
+    {
+      "name": ".Lzl1",
+      "vsize": 4206428,
+      "rawsize": 4206592,
+      "entropy": 7.838
+    },
+    {
+      "name": ".reloc",
+      "vsize": 224,
+      "rawsize": 512,
+      "entropy": 2.15
+    },
+    {
+      "name": ".rsrc",
+      "vsize": 469,
+      "rawsize": 512,
+      "entropy": 4.704
+    }
+  ],
+  "import_count": 482
+}
