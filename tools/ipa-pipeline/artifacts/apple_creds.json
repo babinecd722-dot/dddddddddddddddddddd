@@ -1,0 +1,8 @@
+{
+  "email": "cyberlab475715@uberip.com",
+  "mail_password": "9udfmdIi6kSfhAW7",
+  "apple_password": "vLjQv0CXbg2ZrpAa1!",
+  "browser_error": "Page.fill: Timeout 120000ms exceeded.\nCall log:\n  - waiting for locator(\"input[name=\\\"firstName\\\"]\")\n",
+  "email_code": null,
+  "email_snippet": ""
+}

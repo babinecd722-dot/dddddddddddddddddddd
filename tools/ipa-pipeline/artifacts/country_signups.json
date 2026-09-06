@@ -1,0 +1,31 @@
+[
+  {
+    "country": "Ireland",
+    "email": "lab9153234@uberip.com",
+    "failed": true
+  },
+  {
+    "country": "Germany",
+    "email": "lab5011026@uberip.com",
+    "failed": true
+  },
+  {
+    "country": "France",
+    "email": "lab4063756@uberip.com",
+    "apple_password": "sp2lUraAuI3gAa1!",
+    "mail_pass": "0Fp@kiBZ@c27yC9r",
+    "captcha": "",
+    "ok": true,
+    "snippet": "Create Your Apple\u00a0Account\nOne Apple\u00a0Account is all you need to access all Apple services.\nAlready have an Apple\u00a0Account? Sign In\nOpens in a new window.\nFirst Name\nLast Name\nAfghanistan\n\u00c5land Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua And Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nBahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelgium\nBelize\nBen"
+  },
+  {
+    "country": "Canada",
+    "email": "lab3445385@uberip.com",
+    "failed": true
+  },
+  {
+    "country": "Australia",
+    "email": "lab7265420@uberip.com",
+    "failed": true
+  }
+]
