@@ -21,13 +21,13 @@
   var clock = document.getElementById("omsk-clock");
   if (clock) {
     var clockFormat = new Intl.DateTimeFormat(document.documentElement.lang || "ru", {
-      timeZone: "Asia/Omsk",
+      timeZone: "Asia/Kern",
       hour: "2-digit",
       minute: "2-digit",
       hourCycle: "h23"
     });
     var paintClock = function () {
-      clock.textContent = window.ebalT("Омск") + " " + clockFormat.format(new Date());
+      clock.textContent = window.ebalT("Керн") + " " + clockFormat.format(new Date());
       clock.setAttribute("datetime", new Date().toISOString());
     };
     paintClock();
