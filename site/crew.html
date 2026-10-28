@@ -10,6 +10,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/site.css">
+  <script>
+    (function () {
+      try {
+        var q = new URLSearchParams(location.search).get("lang");
+        var saved = localStorage.getItem("ebal-lang");
+        var nav = (navigator.languages && navigator.languages[0]) || navigator.language || "ru";
+        var raw = String(q || saved || nav || "ru").toLowerCase();
+        var lang = raw.indexOf("zh") === 0 ? "zh" : raw.split("-")[0];
+        if (lang !== "ru") document.documentElement.classList.add("i18n-wait");
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <a class="skip" href="#content">К содержанию</a>
@@ -141,6 +153,7 @@
       <p>Трансляция открывается 1 ноября в 08:00</p>
     </div>
   </footer>
+  <script src="js/i18n.js"></script>
   <script src="js/site.js"></script>
 </body>
 </html>

@@ -6,32 +6,33 @@
     toggle.addEventListener("click", function () {
       var open = menu.classList.toggle("open");
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
-      toggle.textContent = open ? "Закрыть" : "Меню";
+      toggle.textContent = open ? window.ebalT("Закрыть") : window.ebalT("Меню");
     });
 
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape" && menu.classList.contains("open")) {
         menu.classList.remove("open");
         toggle.setAttribute("aria-expanded", "false");
-        toggle.textContent = "Меню";
+        toggle.textContent = window.ebalT("Меню");
       }
     });
   }
 
   var clock = document.getElementById("omsk-clock");
   if (clock) {
-    var clockFormat = new Intl.DateTimeFormat("ru-RU", {
+    var clockFormat = new Intl.DateTimeFormat(document.documentElement.lang || "ru", {
       timeZone: "Asia/Omsk",
       hour: "2-digit",
       minute: "2-digit",
       hourCycle: "h23"
     });
     var paintClock = function () {
-      clock.textContent = "Омск " + clockFormat.format(new Date());
+      clock.textContent = window.ebalT("Омск") + " " + clockFormat.format(new Date());
       clock.setAttribute("datetime", new Date().toISOString());
     };
     paintClock();
     setInterval(paintClock, 15000);
+    window.ebalRepaintClock = paintClock;
   }
 
   document.querySelectorAll("[data-at]").forEach(function (node) {
@@ -41,7 +42,7 @@
     if (!status) return;
     if (Date.now() >= at) {
       node.classList.add("is-past");
-      status.textContent = "выполнено";
+      status.textContent = window.ebalT("выполнено");
     }
   });
 
@@ -61,7 +62,7 @@
     var paint = function () {
       var delta = target - Date.now();
       if (delta <= 0) {
-        box.innerHTML = '<p class="kicker">Окно пуска</p>';
+        box.innerHTML = '<p class="kicker">' + window.ebalT("Окно пуска") + '</p>';
         return;
       }
       var total = Math.floor(delta / 1000);
@@ -79,4 +80,12 @@
     paint();
     setInterval(paint, 1000);
   });
+
+  window.ebalAfterLang = function () {
+    document.querySelectorAll("[data-status]").forEach(function (status) {
+      status.textContent = window.ebalT(status.textContent);
+    });
+    if (toggle) toggle.textContent = menu && menu.classList.contains("open") ? window.ebalT("Закрыть") : window.ebalT("Меню");
+    if (window.ebalRepaintClock) window.ebalRepaintClock();
+  };
 })();
