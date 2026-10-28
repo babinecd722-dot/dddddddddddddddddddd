@@ -209,7 +209,7 @@ h1, h2, .display {
 h1 {
   font-size: clamp(64px, 7.4vw, 118px);
   text-shadow: 0 0 28px rgba(255, 255, 255, 0.28);
-  animation: rise 1s ease both, title-glow 4.5s ease-in-out 1s infinite;
+  animation: title-glow 4.5s ease-in-out infinite;
 }
 
 h2 { font-size: clamp(52px, 5.6vw, 92px); }
