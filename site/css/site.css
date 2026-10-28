@@ -305,6 +305,7 @@ h1 em {
 .split {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 0;
   min-height: 100vh;
   min-height: 100dvh;
   background: #000;
@@ -318,9 +319,10 @@ h1 em {
   align-items: flex-end;
   color: #fff;
   overflow: hidden;
+  background: #000;
 }
 
-.person + .person { box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.28); }
+.person + .person { margin-left: -1px; }
 
 .person .veil {
   background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.18) 38%, rgba(0, 0, 0, 0) 58%);
@@ -415,7 +417,7 @@ h1 em {
   min-height: 100dvh;
 }
 
-.dossier + .dossier { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16); }
+.dossier + .dossier { margin-top: -1px; }
 
 .dossier-photo {
   position: sticky;
@@ -575,7 +577,7 @@ h1 em {
   .layout, .dossier, .split, .stats, .foot, .board-head, .cols { grid-template-columns: 1fr; }
   .dossier-photo { position: relative; height: 78vh; }
   .dossier-body { padding: 32px 24px 56px; }
-  .person + .person { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28); }
+  .person + .person { margin-left: 0; margin-top: -1px; }
   .clock { display: none; }
 }
 
