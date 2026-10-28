@@ -1,24 +1,6 @@
 (function () {
-  var LANGS = [
-    ["ru", "Русский"],
-    ["en", "English"],
-    ["zh", "中文"],
-    ["es", "Español"],
-    ["fr", "Français"],
-    ["de", "Deutsch"],
-    ["pt", "Português"],
-    ["ar", "العربية"],
-    ["ja", "日本語"],
-    ["ko", "한국어"],
-    ["hi", "हिन्दी"],
-    ["tr", "Türkçe"],
-    ["it", "Italiano"],
-    ["pl", "Polski"],
-    ["uk", "Українська"],
-    ["kk", "Қазақша"],
-    ["nl", "Nederlands"],
-    ["vi", "Tiếng Việt"]
-  ];
+  var LANGS = ["ru", "en", "zh", "es", "fr", "de", "pt", "ar", "ja", "ko", "hi", "tr", "it", "pl", "uk", "kk", "nl", "vi"];
+  var NEAR = { be: "ru", mo: "ro" };
   var RTL = { ar: true, he: true, fa: true, ur: true };
   var FONT = {
     zh: "Noto Sans SC",
@@ -37,23 +19,18 @@
   }
 
   function supported(code) {
-    for (var i = 0; i < LANGS.length; i++) if (LANGS[i][0] === code) return true;
-    return false;
+    return LANGS.indexOf(code) !== -1;
   }
 
   function detect() {
-    var query = "";
-    try { query = new URLSearchParams(location.search).get("lang") || ""; } catch (e) {}
-    var saved = "";
-    try { saved = localStorage.getItem("ebal-lang") || ""; } catch (e) {}
     var list = [];
-    if (query) list.push(query);
-    else if (saved) list.push(saved);
-    else if (navigator.languages && navigator.languages.length) list = navigator.languages.slice();
+    if (navigator.languages && navigator.languages.length) list = navigator.languages.slice();
     else if (navigator.language) list = [navigator.language];
-    for (var i = 0; i < list.length; i++) {
+    var i;
+    for (i = 0; i < list.length; i++) {
       var code = baseLang(list[i]);
       if (supported(code)) return code;
+      if (NEAR[code] && supported(NEAR[code])) return NEAR[code];
     }
     return "en";
   }
@@ -123,31 +100,7 @@
     document.documentElement.classList.remove("i18n-wait");
   }
 
-  function mountPicker(lang) {
-    var clock = document.getElementById("omsk-clock");
-    if (!clock || document.getElementById("lang")) return;
-    var select = document.createElement("select");
-    select.id = "lang";
-    select.className = "langpick";
-    select.setAttribute("aria-label", "Language");
-    LANGS.forEach(function (item) {
-      var option = document.createElement("option");
-      option.value = item[0];
-      option.textContent = item[1];
-      if (item[0] === lang) option.selected = true;
-      select.appendChild(option);
-    });
-    select.addEventListener("change", function () {
-      try { localStorage.setItem("ebal-lang", select.value); } catch (e) {}
-      var url = new URL(location.href);
-      url.searchParams.set("lang", select.value);
-      location.href = url.toString();
-    });
-    clock.parentNode.insertBefore(select, clock);
-  }
-
   var lang = detect();
-  mountPicker(lang);
   window.ebalLang = lang;
 
   function finish(data) {

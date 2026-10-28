@@ -13,11 +13,15 @@
   <script>
     (function () {
       try {
-        var q = new URLSearchParams(location.search).get("lang");
-        var saved = localStorage.getItem("ebal-lang");
-        var nav = (navigator.languages && navigator.languages[0]) || navigator.language || "ru";
-        var raw = String(q || saved || nav || "ru").toLowerCase();
-        var lang = raw.indexOf("zh") === 0 ? "zh" : raw.split("-")[0];
+        var list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || "en"];
+        var known = { ru:1, en:1, zh:1, es:1, fr:1, de:1, pt:1, ar:1, ja:1, ko:1, hi:1, tr:1, it:1, pl:1, uk:1, kk:1, nl:1, vi:1, be:1 };
+        var lang = "en";
+        for (var i = 0; i < list.length; i++) {
+          var raw = String(list[i] || "").toLowerCase();
+          var code = raw.indexOf("zh") === 0 ? "zh" : raw.split("-")[0];
+          if (code === "be") code = "ru";
+          if (known[code]) { lang = code; break; }
+        }
         if (lang !== "ru") document.documentElement.classList.add("i18n-wait");
       } catch (e) {}
     })();
