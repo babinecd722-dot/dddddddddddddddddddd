@@ -78,13 +78,38 @@ button, input { font: inherit; color: inherit; }
 }
 
 .nav nav a {
+  position: relative;
   font-family: var(--font);
   font-size: 15px;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.8);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
+
+.nav nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -7px;
+  height: 1px;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.35s ease;
+}
+
+.nav nav a:hover,
+.nav nav a[aria-current="page"] {
+  color: #fff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.65);
+}
+
+.nav nav a:hover::after,
+.nav nav a[aria-current="page"]::after { transform: scaleX(1); }
 
 .nav nav a[aria-current="page"],
 .nav nav a:hover { color: #fff; }
@@ -136,6 +161,8 @@ button, input { font: inherit; color: inherit; }
   object-position: center center;
 }
 
+.plate > img { animation: drift 32s ease-in-out infinite alternate; }
+
 .veil {
   position: absolute;
   inset: 0;
@@ -179,7 +206,11 @@ h1, h2, .display {
   text-transform: uppercase;
 }
 
-h1 { font-size: clamp(64px, 7.4vw, 118px); }
+h1 {
+  font-size: clamp(64px, 7.4vw, 118px);
+  text-shadow: 0 0 28px rgba(255, 255, 255, 0.28);
+  animation: rise 1s ease both, title-glow 4.5s ease-in-out 1s infinite;
+}
 
 h2 { font-size: clamp(52px, 5.6vw, 92px); }
 
@@ -231,6 +262,7 @@ h1 em {
   font-size: clamp(48px, 4.6vw, 76px);
   letter-spacing: 0;
   line-height: 0.85;
+  animation: title-glow 2.8s ease-in-out infinite;
 }
 
 .count span {
@@ -286,7 +318,10 @@ h1 em {
   text-transform: uppercase;
 }
 
-.feed li.is-next strong { color: #fff; }
+.feed li.is-next strong {
+  color: #fff;
+  animation: title-glow 2.6s ease-in-out infinite;
+}
 
 .feed li.is-past { opacity: 0.62; }
 
@@ -305,9 +340,10 @@ h1 em {
 .split {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0;
+  gap: 88px;
   min-height: 100vh;
   min-height: 100dvh;
+  padding: 0 56px;
   background: #000;
 }
 
@@ -322,7 +358,7 @@ h1 em {
   background: #000;
 }
 
-.person + .person { margin-left: -1px; }
+.person + .person { margin: 0; }
 
 .person .veil {
   background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.18) 38%, rgba(0, 0, 0, 0) 58%);
@@ -342,9 +378,26 @@ h1 em {
   text-transform: none;
 }
 
-.person img { transition: transform 1.4s ease; }
+.person img {
+  transition: transform 1.4s ease, filter 1.4s ease;
+  filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+}
 
-.person:hover img { transform: scale(1.035); }
+.person::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 18%;
+  right: 18%;
+  top: 18%;
+  height: 42%;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 68%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: halo 5.5s ease-in-out infinite;
+}
+
+.person:hover img { transform: scale(1.035); filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.18)); }
 
 .stats {
   display: grid;
@@ -577,7 +630,8 @@ h1 em {
   .layout, .dossier, .split, .stats, .foot, .board-head, .cols { grid-template-columns: 1fr; }
   .dossier-photo { position: relative; height: 78vh; }
   .dossier-body { padding: 32px 24px 56px; }
-  .person + .person { margin-left: 0; margin-top: -1px; }
+  .split { gap: 0; padding: 0; }
+  .person + .person { margin: 0; }
   .clock { display: none; }
 }
 
@@ -622,8 +676,33 @@ h1 em {
   .board, .log li { grid-template-columns: 1fr; }
 }
 
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes title-glow {
+  0%, 100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.12); }
+  50% { text-shadow: 0 0 28px rgba(255, 255, 255, 0.72); }
+}
+
+@keyframes halo {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes drift {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .person img { transition: none; }
+  .person img,
+  .plate > img,
+  h1,
+  .count b,
+  .feed li.is-next strong,
+  .person::before { animation: none; transition: none; }
   html:focus-within { scroll-behavior: auto; }
 }
 
