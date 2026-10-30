@@ -64,4 +64,6 @@ window.EBAL_PACK = {
   "хвост": "Heck",
   "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Eine EBAL-Stufe auf dem Kopf: Nase unten, Heckabschnitt oben",
   "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "Eine EBAL-Stufe mit der Nase nach unten: neun Triebwerke am Heck oben, die Nasenkappe frei",
+  "Разобрать ступень": "Stufe zerlegen",
+  "Собрать ступень": "Stufe zusammensetzen",
 };

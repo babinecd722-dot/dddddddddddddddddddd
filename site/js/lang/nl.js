@@ -64,4 +64,6 @@ window.EBAL_PACK = {
   "хвост": "staart",
   "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Een EBAL-trap ondersteboven: neus onder, staartcompartiment boven",
   "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "Een EBAL-trap met de neus omlaag: negen motoren op de staart boven, de neuskegel kaal",
+  "Разобрать ступень": "Trap uit elkaar halen",
+  "Собрать ступень": "Trap in elkaar zetten",
 };

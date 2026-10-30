@@ -64,4 +64,6 @@ window.EBAL_PACK = {
   "хвост": "kuyruk",
   "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Ters çevrilmiş bir EBAL kademesi: burun altta, kuyruk bölümü üstte",
   "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "Burun aşağı bir EBAL kademesi: kuyrukta üstte dokuz motor, burun konisi temiz",
+  "Разобрать ступень": "Kademeyi sök",
+  "Собрать ступень": "Kademeyi topla",
 };

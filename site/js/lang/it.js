@@ -64,4 +64,6 @@ window.EBAL_PACK = {
   "хвост": "coda",
   "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Uno stadio EBAL capovolto: muso in basso, vano di coda in alto",
   "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "Uno stadio EBAL con il muso in basso: nove motori sulla coda in alto, il cono pulito",
+  "Разобрать ступень": "Smontare lo stadio",
+  "Собрать ступень": "Rimontare lo stadio",
 };
