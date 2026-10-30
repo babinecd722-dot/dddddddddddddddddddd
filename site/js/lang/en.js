@@ -395,13 +395,16 @@ window.EBAL_PACK = {
   "На полигоне П-4. Парашют и двигатели мягкой посадки за 1,2 секунды до грунта. На «Север-0» отклонение было 4,6 км. Коридор для людей уже: 8 км по модели Рахала, за ним — разбор, не катастрофа, но миссия не закрыта.": "South of Orsk. Parachute and soft-landing motors 1.2 seconds before the ground. On Sever-0 the miss was 4.6 km. The corridor for people is tighter: 8 km on Rakhal’s model. Beyond that is a review, not a disaster, but the mission is not closed.",
   "Наши технологии": "Our technology",
   "Носовая посадка": "Nose-first landing",
-  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Торможение ведут три двигателя головного блока. Хвостовая девятка в этом режиме не включается: сопла смотрят вверх.": "After separation the stage turns 180° and flies to the pad nose-down. Three engines in the forward bay do the braking. The tail cluster stays off: its nozzles point upward.",
+  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Хвостовой отсек остаётся сверху.": "After separation the stage turns 180° and flies to the pad nose-down. The tail bay stays on top.",
   "На «Север-1» ступень B1041 садится хвостовым двигателем, как на «Север-0». Носовая посадка начинается со следующего борта.": "On Sever-1, stage B1041 still lands on its tail engine, as on Sever-0. Nose-first landing starts with the next booster.",
   "разворот после отделения": "flip after separation",
-  "двигателя в носу": "engines in the nose",
-  "опоры головного отсека": "legs on the forward bay",
-  "высота включения": "ignition altitude",
+  "к площадке": "toward the pad",
+  "сверху": "on top",
+  "начало режима": "start of the mode",
+  "1,2 км": "1.2 km",
   "Ступень EBAL садится носовой частью к площадке, хвостовые сопла смотрят вверх": "An EBAL stage landing nose-down, tail nozzles pointing up",
-  "Головной блок: опоры вокруг носа и тормозной двигатель": "Forward bay: legs around the nose and the braking engine"
+  "Головной блок: опоры вокруг носа и тормозной двигатель": "Forward bay: legs around the nose and the braking engine",
+  "нос": "nose",
+  "хвост": "tail",
+  "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "An EBAL stage turned over: nose at the bottom, tail bay on top",
 };
-window.EBAL_EN = window.EBAL_PACK;

@@ -53,10 +53,14 @@ window.EBAL_PACK = {
   "Страница эфира": "Página del directo",
   "Наши технологии": "Nuestra tecnología",
   "Носовая посадка": "Aterrizaje con el morro hacia abajo",
-  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Торможение ведут три двигателя головного блока. Хвостовая девятка в этом режиме не включается: сопла смотрят вверх.": "Tras la separación, la etapa gira 180° y baja con el morro hacia la plataforma. Frenan tres motores del bloque de proa. Los nueve de cola no se encienden: sus toberas apuntan hacia arriba.",
+  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Хвостовой отсек остаётся сверху.": "Tras la separación, la etapa gira 180° y va a la plataforma con el morro hacia abajo. El compartimento de cola queda arriba.",
   "На «Север-1» ступень B1041 садится хвостовым двигателем, как на «Север-0». Носовая посадка начинается со следующего борта.": "En Sever-1 la etapa B1041 aún aterriza con el motor de cola, como en Sever-0. El aterrizaje con el morro hacia abajo empieza en el siguiente booster.",
   "разворот после отделения": "giro tras la separación",
-  "двигателя в носу": "motores en el morro",
-  "опоры головного отсека": "patas del bloque de proa",
-  "высота включения": "altura de encendido"
+  "к площадке": "hacia la plataforma",
+  "сверху": "arriba",
+  "начало режима": "inicio del modo",
+  "1,2 км": "1,2 km",
+  "нос": "morro",
+  "хвост": "cola",
+  "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Una etapa EBAL invertida: el morro abajo, el compartimento de cola arriba",
 };

@@ -53,10 +53,14 @@ window.EBAL_PACK = {
   "Страница эфира": "Page du direct",
   "Наши технологии": "Notre technologie",
   "Носовая посадка": "Atterrissage nez vers le sol",
-  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Торможение ведут три двигателя головного блока. Хвостовая девятка в этом режиме не включается: сопла смотрят вверх.": "Après la séparation, l'étage se retourne de 180° et rejoint l'aire le nez vers le sol. Trois moteurs du bloc avant freinent. Les neuf moteurs de queue restent éteints : leurs tuyères pointent vers le haut.",
+  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Хвостовой отсек остаётся сверху.": "Après la séparation, l'étage se retourne de 180° et rejoint l'aire le nez vers le sol. Le compartiment de queue reste en haut.",
   "На «Север-1» ступень B1041 садится хвостовым двигателем, как на «Север-0». Носовая посадка начинается со следующего борта.": "Sur Sever-1, l'étage B1041 se pose encore sur le moteur de queue, comme pour Sever-0. L'atterrissage nez vers le sol commence au booster suivant.",
   "разворот после отделения": "retournement après séparation",
-  "двигателя в носу": "moteurs dans le nez",
-  "опоры головного отсека": "pieds du bloc avant",
-  "высота включения": "altitude d'allumage"
+  "к площадке": "vers l'aire",
+  "сверху": "en haut",
+  "начало режима": "début du mode",
+  "1,2 км": "1,2 km",
+  "нос": "nez",
+  "хвост": "queue",
+  "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Un étage EBAL retourné : le nez en bas, le compartiment de queue en haut",
 };

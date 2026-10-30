@@ -53,10 +53,14 @@ window.EBAL_PACK = {
   "Страница эфира": "Livepagina",
   "Наши технологии": "Onze technologie",
   "Носовая посадка": "Landing met de neus omlaag",
-  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Торможение ведут три двигателя головного блока. Хвостовая девятка в этом режиме не включается: сопла смотрят вверх.": "Na de scheiding draait de trap 180° en daalt met de neus naar de landingsplaats. Drie motoren in de neus remmen. De negen staartmotoren blijven uit: de straalpijpen wijzen omhoog.",
+  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Хвостовой отсек остаётся сверху.": "Na de scheiding draait de trap 180° en vliegt met de neus naar de landingsplaats. Het staartcompartiment blijft boven.",
   "На «Север-1» ступень B1041 садится хвостовым двигателем, как на «Север-0». Носовая посадка начинается со следующего борта.": "Bij Sever-1 landt trap B1041 nog op de staartmotor, zoals bij Sever-0. Landing met de neus omlaag begint bij de volgende booster.",
   "разворот после отделения": "draai na scheiding",
-  "двигателя в носу": "motoren in de neus",
-  "опоры головного отсека": "poten aan de neus",
-  "высота включения": "ontstekingshoogte"
+  "к площадке": "naar de landingsplaats",
+  "сверху": "boven",
+  "начало режима": "begin van de stand",
+  "1,2 км": "1,2 km",
+  "нос": "neus",
+  "хвост": "staart",
+  "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Een EBAL-trap ondersteboven: neus onder, staartcompartiment boven",
 };

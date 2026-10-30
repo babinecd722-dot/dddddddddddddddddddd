@@ -53,10 +53,14 @@ window.EBAL_PACK = {
   "Страница эфира": "Strona transmisji",
   "Наши технологии": "Nasza technologia",
   "Носовая посадка": "Lądowanie nosem w dół",
-  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Торможение ведут три двигателя головного блока. Хвостовая девятка в этом режиме не включается: сопла смотрят вверх.": "Po separacji stopień obraca się o 180° i schodzi nosem ku lądowisku. Hamują trzy silniki w bloku przednim. Dziewięć silników ogonowych milczy: dysze są skierowane w górę.",
+  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Хвостовой отсек остаётся сверху.": "Po separacji stopień obraca się o 180° i leci na lądowisko nosem w dół. Przedział ogonowy zostaje u góry.",
   "На «Север-1» ступень B1041 садится хвостовым двигателем, как на «Север-0». Носовая посадка начинается со следующего борта.": "W Siewier-1 stopień B1041 nadal ląduje na silniku ogonowym, jak w Siewier-0. Lądowanie nosem w dół zaczyna się od następnego boostera.",
   "разворот после отделения": "obrót po separacji",
-  "двигателя в носу": "silniki w nosie",
-  "опоры головного отсека": "podpory bloku przedniego",
-  "высота включения": "wysokość włączenia"
+  "к площадке": "ku lądowisku",
+  "сверху": "u góry",
+  "начало режима": "początek trybu",
+  "1,2 км": "1,2 km",
+  "нос": "nos",
+  "хвост": "ogon",
+  "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Stopień EBAL odwrócony: nos na dole, przedział ogonowy u góry",
 };
