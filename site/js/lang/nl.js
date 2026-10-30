@@ -50,5 +50,13 @@ window.EBAL_PACK = {
   "Север-1": "Sever-1",
   "Носитель целиком": "Het hele voertuig",
   "Время до пуска": "Tijd tot lancering",
-  "Страница эфира": "Livepagina"
+  "Страница эфира": "Livepagina",
+  "Наши технологии": "Onze technologie",
+  "Носовая посадка": "Landing met de neus omlaag",
+  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Торможение ведут три двигателя головного блока. Хвостовая девятка в этом режиме не включается: сопла смотрят вверх.": "Na de scheiding draait de trap 180° en daalt met de neus naar de landingsplaats. Drie motoren in de neus remmen. De negen staartmotoren blijven uit: de straalpijpen wijzen omhoog.",
+  "На «Север-1» ступень B1041 садится хвостовым двигателем, как на «Север-0». Носовая посадка начинается со следующего борта.": "Bij Sever-1 landt trap B1041 nog op de staartmotor, zoals bij Sever-0. Landing met de neus omlaag begint bij de volgende booster.",
+  "разворот после отделения": "draai na scheiding",
+  "двигателя в носу": "motoren in de neus",
+  "опоры головного отсека": "poten aan de neus",
+  "высота включения": "ontstekingshoogte"
 };

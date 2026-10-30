@@ -392,6 +392,16 @@ window.EBAL_PACK = {
   "Частная компания орбитальных пусков. Ступени и двигатели «Керн» делают на базе «Керн». Пусками управляют из Орбиты. Стартовый комплекс LC-1 на Севере арендован с 2024 года.": "A private orbital launch company. Stages and Kern engines are built in Kern. Flights are controlled from Orbita. Launch complex LC-1 at Sever has been leased since 2024.",
   "Четыре кресла, на первом пуске заняты два. Спускаемый аппарат садится на сушу. Аварийный увод — четыре твердотопливных двигателя в хвостовой части, вместе со створками обтекателя.": "Four seats, two occupied on the first flight. The descent craft lands on land. The abort motors are four solid rockets in the tail, and they pull the ship clear together with the fairing petals.",
   "Четырнадцать пультов, две смены. Третья сидит на базе «Керн» и повторяет телеметрию, команды на борт оттуда не идут. Поисковая группа на П-4 выезжает 3 ноября вечером, чтобы встретить рассвет 4-го уже на точке.": "Fourteen consoles, two shifts. A third sits in Kern and repeats the telemetry. Commands to the vehicle do not come from there. The P-4 recovery team drives out on the evening of 3 November so they meet the dawn of the 4th already on the point.",
-  "На полигоне П-4. Парашют и двигатели мягкой посадки за 1,2 секунды до грунта. На «Север-0» отклонение было 4,6 км. Коридор для людей уже: 8 км по модели Рахала, за ним — разбор, не катастрофа, но миссия не закрыта.": "South of Orsk. Parachute and soft-landing motors 1.2 seconds before the ground. On Sever-0 the miss was 4.6 km. The corridor for people is tighter: 8 km on Rakhal’s model. Beyond that is a review, not a disaster, but the mission is not closed."
+  "На полигоне П-4. Парашют и двигатели мягкой посадки за 1,2 секунды до грунта. На «Север-0» отклонение было 4,6 км. Коридор для людей уже: 8 км по модели Рахала, за ним — разбор, не катастрофа, но миссия не закрыта.": "South of Orsk. Parachute and soft-landing motors 1.2 seconds before the ground. On Sever-0 the miss was 4.6 km. The corridor for people is tighter: 8 km on Rakhal’s model. Beyond that is a review, not a disaster, but the mission is not closed.",
+  "Наши технологии": "Our technology",
+  "Носовая посадка": "Nose-first landing",
+  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Торможение ведут три двигателя головного блока. Хвостовая девятка в этом режиме не включается: сопла смотрят вверх.": "After separation the stage turns 180° and flies to the pad nose-down. Three engines in the forward bay do the braking. The tail cluster stays off: its nozzles point upward.",
+  "На «Север-1» ступень B1041 садится хвостовым двигателем, как на «Север-0». Носовая посадка начинается со следующего борта.": "On Sever-1, stage B1041 still lands on its tail engine, as on Sever-0. Nose-first landing starts with the next booster.",
+  "разворот после отделения": "flip after separation",
+  "двигателя в носу": "engines in the nose",
+  "опоры головного отсека": "legs on the forward bay",
+  "высота включения": "ignition altitude",
+  "Ступень EBAL садится носовой частью к площадке, хвостовые сопла смотрят вверх": "An EBAL stage landing nose-down, tail nozzles pointing up",
+  "Головной блок: опоры вокруг носа и тормозной двигатель": "Forward bay: legs around the nose and the braking engine"
 };
 window.EBAL_EN = window.EBAL_PACK;

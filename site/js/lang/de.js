@@ -50,5 +50,13 @@ window.EBAL_PACK = {
   "Север-1": "Sever-1",
   "Носитель целиком": "Die ganze Rakete",
   "Время до пуска": "Zeit bis zum Start",
-  "Страница эфира": "Live-Seite"
+  "Страница эфира": "Live-Seite",
+  "Наши технологии": "Unsere Technik",
+  "Носовая посадка": "Landung mit der Nase voraus",
+  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Торможение ведут три двигателя головного блока. Хвостовая девятка в этом режиме не включается: сопла смотрят вверх.": "Nach der Trennung dreht die Stufe um 180° und fliegt mit der Nase zum Boden. Drei Triebwerke im Bug bremsen. Die neun Hecktriebwerke bleiben aus: ihre Düsen zeigen nach oben.",
+  "На «Север-1» ступень B1041 садится хвостовым двигателем, как на «Север-0». Носовая посадка начинается со следующего борта.": "Bei Sever-1 landet Stufe B1041 noch auf dem Hecktriebwerk, wie bei Sever-0. Die Landung mit der Nase voraus beginnt beim nächsten Booster.",
+  "разворот после отделения": "Drehung nach der Trennung",
+  "двигателя в носу": "Triebwerke in der Nase",
+  "опоры головного отсека": "Beine am Bug",
+  "высота включения": "Zündhöhe"
 };

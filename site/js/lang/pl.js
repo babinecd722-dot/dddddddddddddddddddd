@@ -50,5 +50,13 @@ window.EBAL_PACK = {
   "Север-1": "Siewier-1",
   "Носитель целиком": "Cała rakieta",
   "Время до пуска": "Czas do startu",
-  "Страница эфира": "Strona transmisji"
+  "Страница эфира": "Strona transmisji",
+  "Наши технологии": "Nasza technologia",
+  "Носовая посадка": "Lądowanie nosem w dół",
+  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Торможение ведут три двигателя головного блока. Хвостовая девятка в этом режиме не включается: сопла смотрят вверх.": "Po separacji stopień obraca się o 180° i schodzi nosem ku lądowisku. Hamują trzy silniki w bloku przednim. Dziewięć silników ogonowych milczy: dysze są skierowane w górę.",
+  "На «Север-1» ступень B1041 садится хвостовым двигателем, как на «Север-0». Носовая посадка начинается со следующего борта.": "W Siewier-1 stopień B1041 nadal ląduje na silniku ogonowym, jak w Siewier-0. Lądowanie nosem w dół zaczyna się od następnego boostera.",
+  "разворот после отделения": "obrót po separacji",
+  "двигателя в носу": "silniki w nosie",
+  "опоры головного отсека": "podpory bloku przedniego",
+  "высота включения": "wysokość włączenia"
 };

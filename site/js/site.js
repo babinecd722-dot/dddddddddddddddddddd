@@ -21,7 +21,7 @@
   var clock = document.getElementById("omsk-clock");
   if (clock) {
     var clockFormat = new Intl.DateTimeFormat(document.documentElement.lang || "ru", {
-      timeZone: "Asia/Kern",
+      timeZone: "Asia/Omsk",
       hour: "2-digit",
       minute: "2-digit",
       hourCycle: "h23"

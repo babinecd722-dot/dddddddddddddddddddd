@@ -50,5 +50,13 @@ window.EBAL_PACK = {
   "Север-1": "Sever-1",
   "Носитель целиком": "Le lanceur entier",
   "Время до пуска": "Temps avant le lancement",
-  "Страница эфира": "Page du direct"
+  "Страница эфира": "Page du direct",
+  "Наши технологии": "Notre technologie",
+  "Носовая посадка": "Atterrissage nez vers le sol",
+  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Торможение ведут три двигателя головного блока. Хвостовая девятка в этом режиме не включается: сопла смотрят вверх.": "Après la séparation, l'étage se retourne de 180° et rejoint l'aire le nez vers le sol. Trois moteurs du bloc avant freinent. Les neuf moteurs de queue restent éteints : leurs tuyères pointent vers le haut.",
+  "На «Север-1» ступень B1041 садится хвостовым двигателем, как на «Север-0». Носовая посадка начинается со следующего борта.": "Sur Sever-1, l'étage B1041 se pose encore sur le moteur de queue, comme pour Sever-0. L'atterrissage nez vers le sol commence au booster suivant.",
+  "разворот после отделения": "retournement après séparation",
+  "двигателя в носу": "moteurs dans le nez",
+  "опоры головного отсека": "pieds du bloc avant",
+  "высота включения": "altitude d'allumage"
 };

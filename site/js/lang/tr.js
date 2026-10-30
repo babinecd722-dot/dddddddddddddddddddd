@@ -50,5 +50,13 @@ window.EBAL_PACK = {
   "Север-1": "Sever-1",
   "Носитель целиком": "Aracın tümü",
   "Время до пуска": "Fırlatmaya kalan",
-  "Страница эфира": "Yayın sayfası"
+  "Страница эфира": "Yayın sayfası",
+  "Наши технологии": "Teknolojimiz",
+  "Носовая посадка": "Burun aşağı iniş",
+  "После отделения ступень разворачивается на 180° и идёт к площадке носовой частью вниз. Торможение ведут три двигателя головного блока. Хвостовая девятка в этом режиме не включается: сопла смотрят вверх.": "Ayrılmadan sonra kademe 180° döner ve piste burun aşağı iner. Freni baş bölümdeki üç motor yapar. Kuyruk kümesi bu modda çalışmaz: nozullar yukarı bakar.",
+  "На «Север-1» ступень B1041 садится хвостовым двигателем, как на «Север-0». Носовая посадка начинается со следующего борта.": "Sever-1'de B1041 kademesi Sever-0'daki gibi kuyruk motoruyla iner. Burun aşağı iniş bir sonraki gövdeden başlar.",
+  "разворот после отделения": "ayrılma sonrası dönüş",
+  "двигателя в носу": "burundaki motor",
+  "опоры головного отсека": "ön bölüm ayakları",
+  "высота включения": "ateşleme irtifası"
 };
