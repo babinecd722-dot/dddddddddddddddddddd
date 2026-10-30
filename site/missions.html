@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Миссии · EBAL</title>
+  <meta name="description" content="Манифест EBAL: Север-0 выполнена, Север-1 — 1 ноября 2026, Север-2 — 19 декабря, Север-3 — окно марта 2027.">
+  <meta name="theme-color" content="#000000">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/site.css">
+  <script>
+    (function () {
+      try {
+        var list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || "en"];
+        var known = { ru:1, en:1, zh:1, es:1, fr:1, de:1, pt:1, ar:1, ja:1, ko:1, hi:1, tr:1, it:1, pl:1, uk:1, kk:1, nl:1, vi:1, be:1 };
+        var lang = "en";
+        for (var i = 0; i < list.length; i++) {
+          var raw = String(list[i] || "").toLowerCase();
+          var code = raw.indexOf("zh") === 0 ? "zh" : raw.split("-")[0];
+          if (code === "be") code = "ru";
+          if (known[code]) { lang = code; break; }
+        }
+        if (lang !== "ru") document.documentElement.classList.add("i18n-wait");
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip" href="#content">К содержанию</a>
+  <header class="nav">
+    <a class="mark" href="index.html">EBAL</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu">Меню</button>
+    <nav id="menu" aria-label="Разделы">
+      <a href="s1.html">S1</a>
+      <a href="crew.html">Экипаж</a>
+      <a href="missions.html" aria-current="page">Миссии</a>
+      <a href="chronicle.html">Хроника</a>
+      <a href="company.html">Компания</a>
+      <a href="live.html">Эфир</a>
+    </nav>
+    <time class="clock" id="omsk-clock">Керн</time>
+  </header>
+
+  <main id="content">
+    <section class="plate">
+      <img src="assets/earth-limb.jpg" alt="Лимб Земли с низкой орбиты, цель миссии «Север-1»">
+      <div class="veil"></div>
+      <div class="layout">
+        <div>
+          <p class="kicker">В работе · пилотируемая</p>
+          <h1>Север-1</h1>
+          <p class="lede">1 ноября 2026, 09:17. Двое, трое суток, без стыковки. Квалификация корабля «Смена» с людьми после мартовского беспилотного витка.</p>
+          <ul class="meta">
+            <li>B1041</li>
+            <li>200 × 320 км</li>
+            <li>51,6°</li>
+            <li>посадка 4 ноября</li>
+          </ul>
+        </div>
+        <table class="times">
+          <thead>
+            <tr><th>Миссия</th><th>Дата и исход</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Север-0</td><td>12 марта 2026 · выполнена</td></tr>
+            <tr><td>Север-1</td><td>1 ноября 2026 · в подготовке</td></tr>
+            <tr><td>Север-2</td><td>19 декабря 2026 · назначена</td></tr>
+            <tr><td>Север-3</td><td>март 2027 · окно, без даты</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="board">
+      <div class="board-head">
+        <h2>Север-1 по цифрам</h2>
+        <p class="lede">Квалификационный полёт корабля с людьми. Стыковки нет, научного модуля нет, заказчика на кресла нет: компания летит на своём боте и за свой счёт.</p>
+      </div>
+      <div class="cols">
+        <ol class="log">
+          <li>
+            <time>Орбита</time>
+            <div>
+              <h3>200 × 320 км</h3>
+              <p>Наклонение 51,6°. Период около 90 минут. 44 витка. Сход с орбиты начинается на 43-м, тормозной импульс «Смены» — двигателями корабля, не ступенью: ступень к тому времени уже сутки как на LZ-1.</p>
+            </div>
+          </li>
+          <li>
+            <time>Окно</time>
+            <div>
+              <h3>14 минут</h3>
+              <p>09:17–09:31 по времени EBAL, 1 ноября 2026. Второй попытки в тот же день нет: заправка либо штатная, либо слитая. Следующее окно — 2 ноября, та же минута, если 30 октября репетиция не закроется.</p>
+            </div>
+          </li>
+        </ol>
+        <ol class="log">
+          <li>
+            <time>Посадка</time>
+            <div>
+              <h3>П-4, 4 ноября, 06:40</h3>
+              <p>На полигоне П-4. Парашют и двигатели мягкой посадки за 1,2 секунды до грунта. На «Север-0» отклонение было 4,6 км. Коридор для людей уже: 8 км по модели Рахала, за ним — разбор, не катастрофа, но миссия не закрыта.</p>
+            </div>
+          </li>
+          <li>
+            <time>Дальше</time>
+            <div>
+              <h3>Декабрь без людей</h3>
+              <p>«Север-2», 19 декабря, 07:05. B1042, солнечно-синхронная 520 км, аппарат «Керн-1» на 480 кг для «связь EBAL» и два кубсата на 8 кг. Экипаж снова сядет только в «Север-3», окно марта 2027, дата не назначена, четверо, узла стыковки всё ещё нет.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="plate">
+      <img src="assets/launch-ascent.jpg" alt="Пуск «Север-0» 12 марта 2026">
+      <div class="veil"></div>
+      <div class="copy">
+        <p class="kicker">12 марта 2026 · выполнена</p>
+        <h2>Север-0</h2>
+        <p class="lede">Беспилотный орбитальный пуск. В обтекателе — «Смена» без экипажа и массовый макет на месте двух кресел. Ступень B1037 села на LZ-1. Корабль приземлился в районе П-4 с отклонением 4,6 км от расчётной точки. Это внутри коридора, который потом закрепили за моделью Рахала.</p>
+        <ul class="meta">
+          <li>орбита достигнута</li>
+          <li>посадка ступени</li>
+          <li>посадка корабля</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="plate">
+      <img src="assets/highbay.jpg" alt="Ступень B1042 в сборочном зале под миссию «Север-2»">
+      <div class="veil"></div>
+      <div class="copy">
+        <p class="kicker">19 декабря 2026 · 07:05 · грузовая</p>
+        <h2>Север-2</h2>
+        <p class="lede">B1042, солнечно-синхронная 520 км. Аппарат «Керн-1», 480 кг, заказчик — связь EBAL. Попутно два университетских кубсата, вместе 8 кг. Экипажа нет. Возврат ступени на LZ-1, если погода на площадке не закроет окно: зима на Севере это уже не октябрьский иней.</p>
+        <a class="more" href="s1.html">Ступень в зале</a>
+      </div>
+    </section>
+
+    <section class="plate">
+      <img src="assets/mission-control.jpg" alt="ЦУП, где будут вести «Север-3»">
+      <div class="veil"></div>
+      <div class="copy">
+        <p class="kicker">Март 2027 · дата не назначена</p>
+        <h2>Север-3</h2>
+        <p class="lede">Второй пилотируемый. Четыре кресла, набор ещё не объявлен. Стыковки снова нет: узел ставят на борт 03, и он не успевает к весне. Окно держим, чтобы не отпускать смену ЦУПа после «Север-2».</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div>
+      <strong>EBAL</strong>
+      <p>Керн · Орбита · Север</p>
+      <p>ebal.space</p>
+    </div>
+    <div>
+      <a href="s1.html">S1</a>
+      <a href="crew.html">Экипаж</a>
+      <a href="missions.html">Миссии</a>
+      <a href="chronicle.html">Хроника</a>
+      <a href="company.html">Компания</a>
+      <a href="live.html">Эфир</a>
+    </div>
+    <div>
+      <p>Пресс · press@ebal.space</p>
+      <p>Пуски · launch@ebal.space</p>
+      <p>Трансляция открывается 1 ноября в 08:00</p>
+    </div>
+  </footer>
+  <script src="js/i18n.js"></script>
+  <script src="js/site.js"></script>
+</body>
+</html>
