@@ -63,7 +63,5 @@ window.EBAL_PACK = {
   "нос": "nos",
   "хвост": "ogon",
   "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Stopień EBAL odwrócony: nos na dole, przedział ogonowy u góry",
-  "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "Stopień EBAL nosem w dół: dziewięć silników na ogonie u góry, stożek nosa czysty",
-  "Разобрать ступень": "Rozebrać stopień",
-  "Собрать ступень": "Złożyć stopień",
+  "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "Stopień EBAL nosem w dół: dziewięć silników na ogonie u góry, stożek nosa czysty"
 };

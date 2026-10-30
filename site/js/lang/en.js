@@ -407,7 +407,5 @@ window.EBAL_PACK = {
   "нос": "nose",
   "хвост": "tail",
   "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "An EBAL stage turned over: nose at the bottom, tail bay on top",
-  "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "An EBAL stage nose-down: nine engines on the tail at the top, the nose cone bare",
-  "Разобрать ступень": "Take the stage apart",
-  "Собрать ступень": "Assemble the stage",
+  "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "An EBAL stage nose-down: nine engines on the tail at the top, the nose cone bare"
 };

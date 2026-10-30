@@ -81,30 +81,11 @@
     setInterval(paint, 1000);
   });
 
-  var stage = document.getElementById("stage");
-  if (stage) {
-    var label = function (open) {
-      return window.ebalT(open ? "Собрать ступень" : "Разобрать ступень");
-    };
-    var setOpen = function (open) {
-      stage.classList.toggle("is-open", open);
-      stage.setAttribute("aria-pressed", open ? "true" : "false");
-      stage.setAttribute("aria-label", label(open));
-    };
-    stage.addEventListener("click", function (event) {
-      var pointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-      if (pointer && event.detail !== 0) return;
-      setOpen(!stage.classList.contains("is-open"));
-    });
-    window.ebalRepaintStage = function () { setOpen(stage.classList.contains("is-open")); };
-  }
-
   window.ebalAfterLang = function () {
     document.querySelectorAll("[data-status]").forEach(function (status) {
       status.textContent = window.ebalT(status.textContent);
     });
     if (toggle) toggle.textContent = menu && menu.classList.contains("open") ? window.ebalT("Закрыть") : window.ebalT("Меню");
     if (window.ebalRepaintClock) window.ebalRepaintClock();
-    if (window.ebalRepaintStage) window.ebalRepaintStage();
   };
 })();

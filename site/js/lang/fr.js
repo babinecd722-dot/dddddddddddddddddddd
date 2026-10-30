@@ -63,7 +63,5 @@ window.EBAL_PACK = {
   "нос": "nez",
   "хвост": "queue",
   "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Un étage EBAL retourné : le nez en bas, le compartiment de queue en haut",
-  "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "Un étage EBAL le nez en bas : neuf moteurs sur la queue en haut, le cône de nez nu",
-  "Разобрать ступень": "Démonter l'étage",
-  "Собрать ступень": "Remonter l'étage",
+  "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "Un étage EBAL le nez en bas : neuf moteurs sur la queue en haut, le cône de nez nu"
 };

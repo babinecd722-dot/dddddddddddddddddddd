@@ -63,7 +63,5 @@ window.EBAL_PACK = {
   "нос": "morro",
   "хвост": "cola",
   "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Una etapa EBAL invertida: el morro abajo, el compartimento de cola arriba",
-  "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "Una etapa EBAL con el morro abajo: nueve motores en la cola arriba, el cono limpio",
-  "Разобрать ступень": "Desmontar la etapa",
-  "Собрать ступень": "Montar la etapa",
+  "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "Una etapa EBAL con el morro abajo: nueve motores en la cola arriba, el cono limpio"
 };
