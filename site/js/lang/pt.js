@@ -63,4 +63,5 @@ window.EBAL_PACK = {
   "нос": "nariz",
   "хвост": "cauda",
   "Ступень EBAL перевёрнута: носовая часть внизу, хвостовой отсек сверху": "Um estágio EBAL invertido: nariz em baixo, compartimento da cauda em cima",
+  "Ступень EBAL носом вниз: девять двигателей на хвосте сверху, носовой конус чистый": "Um estágio EBAL com o nariz para baixo: nove motores na cauda em cima, o cone limpo",
 };
