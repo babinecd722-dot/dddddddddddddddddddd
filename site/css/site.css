@@ -805,6 +805,12 @@ body.nav-lock { overflow: hidden; }
     font-weight: 500;
     color: #fff;
     line-height: 0.9;
+    text-shadow: none;
+  }
+
+  .nav nav a::after,
+  .nav nav a[aria-current="page"]::after {
+    content: none;
   }
 
   .layout { padding-top: 108px; }

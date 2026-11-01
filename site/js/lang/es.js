@@ -7,7 +7,7 @@ window.EBAL_PACK = {
   "Меню": "Menú",
   "Закрыть": "Cerrar",
   "К содержанию": "Ir al contenido",
-  "1 ноября": "1 de noviembre",
+  "24 ноября": "24 de noviembre",
   "Ход кампании": "Campaña",
   "Вывоз на LC-1": "Traslado a LC-1",
   "Допуск экипажа": "Autorización de la tripulación",
