@@ -23,16 +23,6 @@
     });
   }
 
-  var navBar = document.querySelector(".nav");
-  if (navBar && window.visualViewport) {
-    var pinNav = function () {
-      navBar.style.top = window.visualViewport.offsetTop + "px";
-    };
-    window.visualViewport.addEventListener("scroll", pinNav);
-    window.visualViewport.addEventListener("resize", pinNav);
-    pinNav();
-  }
-
   var clock = document.getElementById("omsk-clock");
   if (clock) {
     var clockFormat = new Intl.DateTimeFormat(document.documentElement.lang || "ru", {

@@ -10,7 +10,10 @@
 
 * { box-sizing: border-box; }
 
-html { background: #000; }
+html {
+  background: #000;
+  overflow-anchor: none;
+}
 
 body {
   margin: 0;
@@ -33,7 +36,8 @@ button, input { font: inherit; color: inherit; }
 ::selection { background: #fff; color: #000; }
 
 .miss {
-  min-height: 100dvh;
+  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -135,7 +139,7 @@ html[dir="rtl"] body { direction: rtl; }
 .plate {
   position: relative;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100svh;
   display: flex;
   align-items: flex-end;
   overflow: hidden;
@@ -143,8 +147,10 @@ html[dir="rtl"] body { direction: rtl; }
 }
 
 .tech {
-  height: 100dvh;
-  max-height: 100dvh;
+  height: 100vh;
+  height: 100svh;
+  max-height: 100vh;
+  max-height: 100svh;
 }
 
 .tech > img {
@@ -413,7 +419,7 @@ h1 em {
   grid-template-columns: 1fr 1fr;
   gap: 0;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100svh;
   padding: 0;
   background: #000;
   overflow: hidden;
@@ -436,7 +442,7 @@ h1 em {
   position: relative;
   z-index: auto;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100svh;
   display: flex;
   align-items: flex-end;
   color: #fff;
@@ -563,7 +569,7 @@ h1 em {
   grid-template-columns: 1.05fr 0.95fr;
   background: #000;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100svh;
 }
 
 .dossier + .dossier { margin-top: -1px; }
@@ -572,7 +578,7 @@ h1 em {
   position: sticky;
   top: 0;
   height: 100vh;
-  height: 100dvh;
+  height: 100svh;
   overflow: hidden;
   background: #000;
 }
