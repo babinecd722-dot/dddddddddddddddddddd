@@ -61,12 +61,35 @@
     document.documentElement.style.setProperty("--display", stack);
   }
 
+  var LOCALES = {
+    ru: "ru_RU", en: "en_US", zh: "zh_CN", es: "es_ES", fr: "fr_FR", de: "de_DE",
+    pt: "pt_PT", ar: "ar_AR", ja: "ja_JP", ko: "ko_KR", hi: "hi_IN", tr: "tr_TR",
+    it: "it_IT", pl: "pl_PL", uk: "uk_UA", kk: "kk_KZ", nl: "nl_NL", vi: "vi_VN"
+  };
+
+  function setMeta(name, value) {
+    if (!value) return;
+    var el = document.querySelector('meta[property="' + name + '"]') || document.querySelector('meta[name="' + name + '"]');
+    if (el) el.setAttribute("content", value);
+  }
+
+  function share() {
+    var descEl = document.querySelector('meta[name="description"]');
+    var desc = descEl ? descEl.getAttribute("content") : "";
+    setMeta("og:title", document.title);
+    setMeta("og:description", desc);
+    setMeta("twitter:title", document.title);
+    setMeta("twitter:description", desc);
+    setMeta("og:locale", LOCALES[document.documentElement.lang] || "ru_RU");
+  }
+
   function apply(lang) {
     document.documentElement.lang = lang;
     document.documentElement.dir = RTL[lang] ? "rtl" : "ltr";
     loadFace(lang);
     if (lang === "ru") {
       pack = null;
+      share();
       reveal();
       return;
     }
@@ -91,6 +114,7 @@
     var meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute("content", translate(meta.getAttribute("content")));
     if (document.title) document.title = translate(document.title);
+    share();
     var menu = document.getElementById("menu");
     if (menu) menu.setAttribute("aria-label", translate("Разделы"));
     reveal();
