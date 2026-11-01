@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://ebal.space/</loc>
+    <lastmod>2026-11-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://ebal.space/assets/hero-pad.jpg</image:loc>
+      <image:title>EBAL S1 на стартовом комплексе LC-1</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ebal.space/live.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://ebal.space/assets/live-ascent.jpg</image:loc>
+      <image:title>Эфир пуска EBAL S1</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ebal.space/crew.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ebal.space/assets/crew-mamut.jpg</image:loc>
+      <image:title>Командир Мамут</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ebal.space/s1.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ebal.space/assets/s1-pad.jpg</image:loc>
+      <image:title>Носитель EBAL S1</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ebal.space/missions.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://ebal.space/assets/missions-orbit.jpg</image:loc>
+      <image:title>Миссии EBAL</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ebal.space/chronicle.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://ebal.space/assets/chronicle-wait.jpg</image:loc>
+      <image:title>Хроника «Север-1»</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ebal.space/company.html</loc>
+    <lastmod>2026-11-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://ebal.space/assets/company-hall.jpg</image:loc>
+      <image:title>Компания EBAL Space</image:title>
+    </image:image>
+  </url>
+</urlset>
