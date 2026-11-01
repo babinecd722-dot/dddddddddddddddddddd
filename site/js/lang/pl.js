@@ -33,7 +33,7 @@ window.EBAL_PACK = {
   "сек": "s",
   "Окно пуска": "Okno startowe",
   "Разделы": "Działy",
-  "Миссия «Север-1» · LC-1 Север": "Misja Siewier-1 · LC-1 Wostocznyj",
+  "Миссия «Север-1» / LC-1 Север": "Misja Siewier-1 / LC-1 Wostocznyj",
   "EBAL S1 поднимает корабль «Смена». На борту Мамут и Рахал. Первая ступень B1041 возвращается на LZ-1.": "EBAL S1 wynosi statek Irtysz. Na pokładzie są Mamut i Rachal. Pierwszy stopień B1041 wraca na LZ-1.",
   "Выезд": "Wyjazd",
   "Скафандры": "Skafandry",

@@ -33,7 +33,7 @@ window.EBAL_PACK = {
   "сек": "sn",
   "Окно пуска": "Fırlatma penceresi",
   "Разделы": "Bölümler",
-  "Миссия «Север-1» · LC-1 Север": "Sever-1 görevi · LC-1 Sever",
+  "Миссия «Север-1» / LC-1 Север": "Sever-1 görevi / LC-1 Sever",
   "EBAL S1 поднимает корабль «Смена». На борту Мамут и Рахал. Первая ступень B1041 возвращается на LZ-1.": "EBAL S1, Smena gemisini kaldırır. Gemide Mamut ve Rakhal vardır. Birinci kademe B1041 LZ-1'e döner.",
   "Выезд": "Çıkış",
   "Скафандры": "Giysiler",
