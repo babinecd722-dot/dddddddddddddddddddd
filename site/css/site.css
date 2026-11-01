@@ -87,31 +87,12 @@ button, input { font: inherit; color: inherit; }
   transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
-.nav nav a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -7px;
-  height: 1px;
-  background: #fff;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.35s ease;
-}
+.nav nav a:hover { color: #fff; }
 
-.nav nav a:hover,
 .nav nav a[aria-current="page"] {
   color: #fff;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.65);
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.9);
 }
-
-.nav nav a:hover::after,
-.nav nav a[aria-current="page"]::after { transform: scaleX(1); }
-
-.nav nav a[aria-current="page"],
-.nav nav a:hover { color: #fff; }
 
 html.i18n-wait body { visibility: hidden; }
 
@@ -805,12 +786,10 @@ body.nav-lock { overflow: hidden; }
     font-weight: 500;
     color: #fff;
     line-height: 0.9;
-    text-shadow: none;
   }
 
-  .nav nav a::after,
-  .nav nav a[aria-current="page"]::after {
-    content: none;
+  .nav nav a[aria-current="page"] {
+    text-shadow: 0 0 22px rgba(255, 255, 255, 0.95);
   }
 
   .layout { padding-top: 108px; }
