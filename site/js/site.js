@@ -3,19 +3,34 @@
   var menu = document.getElementById("menu");
 
   if (toggle && menu) {
-    toggle.addEventListener("click", function () {
-      var open = menu.classList.toggle("open");
+    var setMenu = function (open) {
+      menu.classList.toggle("open", open);
+      document.body.classList.toggle("nav-lock", open);
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
       toggle.textContent = open ? window.ebalT("Закрыть") : window.ebalT("Меню");
+    };
+
+    toggle.addEventListener("click", function () {
+      setMenu(!menu.classList.contains("open"));
+    });
+
+    menu.querySelectorAll("a").forEach(function (link) {
+      link.addEventListener("click", function () { setMenu(false); });
     });
 
     document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && menu.classList.contains("open")) {
-        menu.classList.remove("open");
-        toggle.setAttribute("aria-expanded", "false");
-        toggle.textContent = window.ebalT("Меню");
-      }
+      if (event.key === "Escape" && menu.classList.contains("open")) setMenu(false);
     });
+  }
+
+  var navBar = document.querySelector(".nav");
+  if (navBar && window.visualViewport) {
+    var pinNav = function () {
+      navBar.style.top = window.visualViewport.offsetTop + "px";
+    };
+    window.visualViewport.addEventListener("scroll", pinNav);
+    window.visualViewport.addEventListener("resize", pinNav);
+    pinNav();
   }
 
   var clock = document.getElementById("omsk-clock");
