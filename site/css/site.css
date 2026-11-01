@@ -68,6 +68,14 @@ button, input { font: inherit; color: inherit; }
   line-height: 1;
   letter-spacing: 0.04em;
   margin-right: auto;
+  text-decoration: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.mark:focus,
+.mark:focus-visible {
+  outline: none;
 }
 
 .nav nav {
